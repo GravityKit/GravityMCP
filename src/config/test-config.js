@@ -52,7 +52,7 @@ export const testConfig = {
    * Check if test mode is enabled
    */
   isTestMode() {
-    return process.env.GRAVITY_MCP_TEST_MODE === 'true' || 
+    return process.env.GRAVITYMCP_TEST_MODE === 'true' || 
            process.env.NODE_ENV === 'test';
   },
   

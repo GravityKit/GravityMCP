@@ -1,11 +1,11 @@
 {
-  "name": "@gravitykit/gravity-mcp",
-  "version": "1.0.2",
+  "name": "@gravitykit/gravitymcp",
+  "version": "1.0.1",
   "description": "Full-featured MCP server for Gravity Forms",
   "main": "src/index.js",
   "type": "module",
   "bin": {
-    "gravity-mcp": "src/index.js"
+    "gravitymcp": "src/index.js"
   },
   "scripts": {
     "start": "node src/index.js",
@@ -51,7 +51,6 @@
   "files": [
     "src/",
     "scripts/",
-    "docs/",
     "LICENSE",
     "README.md",
     ".env.example",
@@ -60,12 +59,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/GravityKit/gravity-mcp.git"
+    "url": "git+https://github.com/GravityKit/GravityMCP.git"
   },
   "bugs": {
-    "url": "https://github.com/GravityKit/gravity-mcp/issues"
+    "url": "https://github.com/GravityKit/GravityMCP/issues"
   },
-  "homepage": "https://github.com/GravityKit/gravity-mcp#readme",
+  "homepage": "https://github.com/GravityKit/GravityMCP#readme",
   "publishConfig": {
     "access": "public"
   },

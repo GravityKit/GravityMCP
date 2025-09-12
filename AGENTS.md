@@ -5,7 +5,7 @@ A comprehensive MCP (Model Context Protocol) server implementation for the Gravi
 
 ## 🏗️ Project Structure
 ```
-MCPs/gravity-mcp/
+GravityMCP/
 ├── package.json
 ├── README.md
 ├── .env.example
@@ -42,11 +42,9 @@ MCPs/gravity-mcp/
 │       ├── submissions.test.js (submissions tests)
 │       ├── validations.test.js (validation tests)
 │       └── authentication.test.js (auth tests)
-├── scripts/
-│   ├── check-env.js
-│   └── setup-test-data.js
-└── docs/
-    └── api-coverage.md
+└── scripts/
+    ├── check-env.js
+    └── setup-test-data.js
 ```
 
 ## 🔧 Technical Architecture

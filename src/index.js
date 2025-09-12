@@ -25,7 +25,7 @@ dotenv.config();
 // Initialize the MCP server
 const server = new Server(
   {
-    name: 'gravity-mcp',
+    name: 'gravitymcp',
     version: '1.0.0'
   },
   {

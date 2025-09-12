@@ -2,7 +2,7 @@
 
 A Model Context Protocol (MCP) server for Gravity Forms. Interact with your WordPress forms, entries, and submissions through any MCP-compatible client.
 
-[![npm version](https://img.shields.io/npm/v/@gravitykit/gravity-mcp.svg)](https://www.npmjs.com/package/@gravitykit/gravity-mcp)
+[![npm version](https://img.shields.io/npm/v/@gravitykit/gravitymcp.svg)](https://www.npmjs.com/package/@gravitykit/gravitymcp)
 
 Built by [GravityKit](https://www.gravitykit.com) for the Gravity Forms and WordPress communities.
 
@@ -27,8 +27,8 @@ Built by [GravityKit](https://www.gravitykit.com) for the Gravity Forms and Word
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/GravityKit/gravity-mcp.git
-   cd gravity-mcp
+   git clone https://github.com/GravityKit/GravityMCP.git
+   cd GravityMCP
    npm install
    ```
 
@@ -198,7 +198,7 @@ npm run setup-test-data
 npm test
 
 # Interactive testing with MCP Inspector (test mode)
-GRAVITY_MCP_TEST_MODE=true npm run inspect
+GRAVITYMCP_TEST_MODE=true npm run inspect
 
 # Run specific test suites against test site
 NODE_ENV=test npm run test:forms
@@ -209,7 +209,7 @@ NODE_ENV=test npm run test:submissions
 ### Test Mode Detection
 
 The server automatically uses test configuration when:
-1. `GRAVITY_MCP_TEST_MODE=true` is set
+1. `GRAVITYMCP_TEST_MODE=true` is set
 2. OR `NODE_ENV=test` is set
 3. OR test credentials are configured and test commands are run
 
