@@ -1,5 +1,5 @@
 /**
- * Input Validation Module for Gravity Forms MCP Server
+ * Input Validation Module for Gravity MCP
  * Complete rewrite using composable validation architecture
  */
 
@@ -23,12 +23,12 @@ export class BaseValidator {
     if (!data || typeof data !== 'object') {
       throw new Error('Input must be an object');
     }
-    
+
     const missing = requiredFields.filter(field => {
       const value = data[field];
       return value === undefined || value === null;
     });
-    
+
     if (missing.length > 0) {
       if (missing.length === 1) {
         throw new Error(`${missing[0]} is required`);
@@ -44,7 +44,7 @@ export class BaseValidator {
       .required()
       .positiveInteger()
     );
-    
+
     try {
       const result = schema.validate({ value: id });
       return result.value;
@@ -63,18 +63,18 @@ export class BaseValidator {
     if (!Array.isArray(ids)) {
       throw new Error(`${fieldName} must be an array`);
     }
-    return ids.map((id, index) => 
+    return ids.map((id, index) =>
       this.validateId(id, `${fieldName}[${index}]`)
     );
   }
 
   static validatePagination(params) {
     const validated = {};
-    
+
     if (params.page !== undefined) {
       validated.page = this.validateId(params.page, 'page');
     }
-    
+
     if (params.per_page !== undefined) {
       const perPage = this.validateId(params.per_page, 'per_page');
       if (perPage > 100) {
@@ -82,7 +82,7 @@ export class BaseValidator {
       }
       validated.per_page = perPage;
     }
-    
+
     return validated;
   }
 
@@ -92,19 +92,19 @@ export class BaseValidator {
     }
 
     const { key, value, operator } = filter;
-    
+
     if (!key) {
       throw new Error('Field filter must have a key');
     }
-    
+
     if (value === undefined) {
       throw new Error('Field filter must have a value');
     }
-    
+
     if (operator && !getEnumValues('fieldOperators').includes(operator)) {
       throw new Error(`Invalid operator: ${operator}. Valid operators: ${getEnumValues('fieldOperators').join(', ')}`);
     }
-    
+
     return {
       key: String(key),
       value: String(value),
@@ -116,41 +116,41 @@ export class BaseValidator {
     if (searchParams === undefined) {
       return null;
     }
-    
+
     if (!searchParams || typeof searchParams !== 'object' || Array.isArray(searchParams)) {
       throw new Error('search must be an object');
     }
 
     const validated = {};
-    
+
     if (searchParams.field_filters !== undefined) {
       validated.field_filters = this.validateArray(searchParams.field_filters, 'field_filters');
       if (validated.field_filters.length > 0) {
-        validated.field_filters = validated.field_filters.map(filter => 
+        validated.field_filters = validated.field_filters.map(filter =>
           this.validateFieldFilter(filter)
         );
       }
     }
-    
+
     if (searchParams.mode !== undefined) {
       if (!getEnumValues('searchMode').includes(searchParams.mode)) {
         throw new Error(`mode must be one of: ${getEnumValues('searchMode').join(', ')}`);
       }
       validated.mode = searchParams.mode;
     }
-    
+
     if (searchParams.start_date !== undefined) {
       validated.start_date = this.validateDate(searchParams.start_date, 'start_date');
     }
-    
+
     if (searchParams.end_date !== undefined) {
       validated.end_date = this.validateDate(searchParams.end_date, 'end_date');
     }
-    
+
     if (validated.mode && !validated.field_filters) {
       throw new Error(VALIDATION_CONFIG.errorMessages.custom.searchWithMode);
     }
-    
+
     return validated;
   }
 
@@ -160,18 +160,18 @@ export class BaseValidator {
     }
 
     const validated = {};
-    
+
     if (sortingParams.key) {
       validated.key = String(sortingParams.key);
     }
-    
+
     if (sortingParams.direction) {
       if (!getEnumValues('sortDirection').includes(sortingParams.direction)) {
         throw new Error(`Invalid sort direction: ${sortingParams.direction}. Valid directions: ${getEnumValues('sortDirection').join(', ')}`);
       }
       validated.direction = sortingParams.direction.toLowerCase();
     }
-    
+
     return validated;
   }
 
@@ -217,7 +217,7 @@ export class BaseValidator {
       .string()
       .email()
     );
-    
+
     try {
       const result = schema.validate({ value: email });
       return result.value;
@@ -233,7 +233,7 @@ export class BaseValidator {
       .string()
       .url()
     );
-    
+
     try {
       const result = schema.validate({ value: url });
       return result.value;
@@ -275,7 +275,7 @@ export class FormsValidator extends BaseValidator {
     }
 
     const validated = { ...formData };
-    
+
     if (isUpdate) {
       // Use lowercase for validation tests
       BaseValidator.validateRequired(formData, ['id']);
@@ -283,7 +283,7 @@ export class FormsValidator extends BaseValidator {
     } else {
       BaseValidator.validateRequired(formData, ['title']);
     }
-    
+
     if (formData.title !== undefined) {
       if (typeof formData.title !== 'string') {
         throw new Error('title must be a string');
@@ -296,18 +296,18 @@ export class FormsValidator extends BaseValidator {
       }
       validated.title = formData.title.trim();
     }
-    
+
     if (formData.description) {
       validated.description = this.sanitizeString(formData.description, 'description');
     }
-    
+
     if (formData.fields) {
       if (!Array.isArray(formData.fields)) {
         throw new Error('Form fields must be an array');
       }
       validated.fields = FieldAwareValidator.validateFormFields(formData.fields);
     }
-    
+
     if (formData.confirmations !== undefined) {
       validated.confirmations = this.validateArray(formData.confirmations, 'confirmations');
       validated.confirmations = validated.confirmations.map((conf, index) => {
@@ -317,15 +317,15 @@ export class FormsValidator extends BaseValidator {
         return conf;
       });
     }
-    
+
     if (formData.schedule_start !== undefined) {
       validated.schedule_start = this.validateDate(formData.schedule_start, 'schedule_start');
     }
-    
+
     if (formData.schedule_end !== undefined) {
       validated.schedule_end = this.validateDate(formData.schedule_end, 'schedule_end');
     }
-    
+
     return validated;
   }
 }
@@ -336,45 +336,45 @@ export class FormsValidator extends BaseValidator {
 export class EntriesValidator extends BaseValidator {
   static validateListEntriesParams(params) {
     const validated = {};
-    
+
     Object.assign(validated, this.validatePagination(params));
-    
+
     if (params.form_ids !== undefined) {
       validated.form_ids = this.validateArray(params.form_ids, 'form_ids');
       if (validated.form_ids.length > 0) {
         validated.form_ids = this.validateIds(validated.form_ids, 'form_ids');
       }
     }
-    
+
     if (params.include !== undefined) {
       validated.include = this.validateArray(params.include, 'include');
       if (validated.include.length > 0) {
         validated.include = this.validateIds(validated.include, 'include');
       }
     }
-    
+
     if (params.exclude !== undefined) {
       validated.exclude = this.validateArray(params.exclude, 'exclude');
       if (validated.exclude.length > 0) {
         validated.exclude = this.validateIds(validated.exclude, 'exclude');
       }
     }
-    
+
     if (params.status) {
       validated.status = this.validateStatus(params.status, getEnumValues('entryStatus'));
     }
-    
+
     if (params.search) {
       validated.search = this.validateSearch(params.search);
     }
-    
+
     if (params.sorting) {
       validated.sorting = this.validateSorting(params.sorting);
     }
-    
+
     if (params.paging !== undefined) {
       validated.paging = this.validateObject(params.paging, 'paging');
-      
+
       const paging = {};
       if (params.paging.page_size !== undefined) {
         const pageSize = Number(params.paging.page_size);
@@ -386,14 +386,14 @@ export class EntriesValidator extends BaseValidator {
         }
         paging.page_size = pageSize;
       }
-      
+
       if (params.paging.current_page) {
         paging.current_page = this.validateId(params.paging.current_page, 'current_page');
       }
-      
+
       validated.paging = paging;
     }
-    
+
     return validated;
   }
 
@@ -403,7 +403,7 @@ export class EntriesValidator extends BaseValidator {
     }
 
     const validated = { ...entryData };
-    
+
     if (!isUpdate) {
       BaseValidator.validateRequired(entryData, ['form_id']);
       validated.form_id = this.validateId(entryData.form_id, 'form_id');
@@ -414,19 +414,19 @@ export class EntriesValidator extends BaseValidator {
         validated.form_id = this.validateId(entryData.form_id, 'form_id');
       }
     }
-    
+
     if (entryData.created_by) {
       validated.created_by = this.validateId(entryData.created_by, 'created_by');
     }
-    
+
     if (entryData.status) {
       validated.status = this.validateStatus(entryData.status, getEnumValues('entryStatus'));
     }
-    
+
     if (entryData.date_created) {
       validated.date_created = this.validateDate(entryData.date_created, 'date_created');
     }
-    
+
     return validated;
   }
 }
@@ -486,7 +486,7 @@ export class ValidationFactory {
             validated.status = input.status;
           }
           return validated;
-        
+
         case 'gf_create_form':
           return FormsValidator.validateFormData(input, false);
         case 'gf_update_form':
@@ -501,7 +501,7 @@ export class ValidationFactory {
             result.force = BaseValidator.validateBoolean(input.force, 'force');
           }
           return result;
-        
+
         case 'gf_validate_form':
         case 'gf_submit_form_data':
         case 'gf_validate_submission':
@@ -522,7 +522,7 @@ export class ValidationFactory {
             throw new Error('field_values must be an object');
           }
           return subValidated;
-        
+
         case 'gf_list_entries':
           return EntriesValidator.validateListEntriesParams(input);
         case 'gf_create_entry':
@@ -539,7 +539,7 @@ export class ValidationFactory {
             entryResult.force = BaseValidator.validateBoolean(input.force, 'force');
           }
           return entryResult;
-        
+
         case 'gf_list_feeds':
           const feedsValidated = {};
           if (input.addon) {
@@ -552,7 +552,7 @@ export class ValidationFactory {
             feedsValidated.form_id = BaseValidator.validateId(input.form_id, 'form_id');
           }
           return feedsValidated;
-        
+
         case 'gf_create_feed':
           // For create, we need to handle the validation carefully
           if (!input || typeof input !== 'object') {
@@ -574,18 +574,18 @@ export class ValidationFactory {
           }
           // Now use the new validator for detailed validation
           return NewFeedsValidator.validateFeedData(input, true);
-        
+
         case 'gf_update_feed':
         case 'gf_patch_feed':
           return NewFeedsValidator.validateFeedData(input, false);
-        
+
         case 'gf_get_feed':
         case 'gf_delete_feed':
           BaseValidator.validateRequired(input, ['id']);
           return {
             id: BaseValidator.validateId(input.id, 'id')
           };
-        
+
         case 'gf_list_form_feeds':
           if (!input.form_id) {
             throw new Error('form_id is required for listing form feeds');
@@ -593,21 +593,21 @@ export class ValidationFactory {
           return {
             form_id: BaseValidator.validateId(input.form_id, 'form_id')
           };
-        
+
         case 'gf_send_notifications':
           // Check required field for legacy compatibility
           if (!input || !input.entry_id) {
             throw new Error('entry_id is required');
           }
           return NewNotificationsValidator.validateSendNotificationsParams(input);
-        
+
         case 'gf_get_field_filters':
         case 'gf_get_results':
           BaseValidator.validateRequired(input, ['form_id']);
           return {
             form_id: BaseValidator.validateId(input.form_id, 'form_id')
           };
-        
+
         default:
           if (input.id !== undefined) {
             input.id = BaseValidator.validateId(input.id);

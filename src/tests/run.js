@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Test Runner for Gravity Forms MCP Server
+ * Test Runner for Gravity MCP
  * Runs all test suites and reports results
  */
 
@@ -27,18 +27,18 @@ let totalPassed = 0;
 let totalFailed = 0;
 let allFailures = [];
 
-console.log('🚀 Gravity Forms MCP Server Test Suite');
+console.log('🚀 Gravity MCP Test Suite');
 console.log('=====================================\n');
 
 // Run all test suites
 async function runAllTests() {
   const startTime = Date.now();
-  
+
   for (const suite of testSuites) {
     const result = await suite.run();
     totalPassed += result.passed;
     totalFailed += result.failed;
-    
+
     if (result.failures && result.failures.length > 0) {
       allFailures.push(...result.failures.map(f => ({
         suite: suite.name,
@@ -46,37 +46,37 @@ async function runAllTests() {
       })));
     }
   }
-  
+
   const endTime = Date.now();
   const duration = ((endTime - startTime) / 1000).toFixed(2);
-  
+
   // Print final summary
   console.log('\n' + '='.repeat(60));
   console.log('📊 FINAL TEST RESULTS');
   console.log('='.repeat(60));
-  
+
   console.log(`\n✅ Passed: ${totalPassed}`);
   console.log(`❌ Failed: ${totalFailed}`);
   console.log(`⏱️  Duration: ${duration}s`);
-  
-  const passRate = totalPassed + totalFailed > 0 
+
+  const passRate = totalPassed + totalFailed > 0
     ? ((totalPassed / (totalPassed + totalFailed)) * 100).toFixed(1)
     : 0;
-  
+
   console.log(`📈 Pass Rate: ${passRate}%`);
-  
+
   // Print all failures if any
   if (allFailures.length > 0) {
     console.log('\n' + '='.repeat(60));
     console.log('❌ FAILED TESTS SUMMARY');
     console.log('='.repeat(60));
-    
+
     allFailures.forEach((failure, index) => {
       console.log(`\n${index + 1}. [${failure.suite}] ${failure.test}`);
       console.log(`   Error: ${failure.error}`);
     });
   }
-  
+
   // Exit with appropriate code
   if (totalFailed > 0) {
     console.log('\n❌ Tests failed! Please fix the issues above.');

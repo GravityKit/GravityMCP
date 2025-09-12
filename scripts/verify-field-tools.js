@@ -34,15 +34,15 @@ serverProcess.stdout.on('data', (data) => {
 
 serverProcess.stderr.on('data', (data) => {
   errorOutput += data.toString();
-  
+
   // Check for successful initialization
   if (errorOutput.includes('Field operations infrastructure initialized')) {
     console.log('✅ Field operations infrastructure initialized successfully');
   }
-  
-  if (errorOutput.includes('Gravity Forms MCP Server running on stdio')) {
+
+  if (errorOutput.includes('Gravity MCP running on stdio')) {
     console.log('✅ Server started successfully');
-    
+
     // Send a list tools request
     const listToolsRequest = {
       jsonrpc: '2.0',
@@ -50,7 +50,7 @@ serverProcess.stderr.on('data', (data) => {
       params: {},
       id: 1
     };
-    
+
     serverProcess.stdin.write(JSON.stringify(listToolsRequest) + '\n');
   }
 });
@@ -58,7 +58,7 @@ serverProcess.stderr.on('data', (data) => {
 serverProcess.stdout.on('data', (data) => {
   try {
     const response = JSON.parse(data.toString());
-    
+
     if (response.result && response.result.tools) {
       const tools = response.result.tools;
       const fieldTools = [
@@ -67,9 +67,9 @@ serverProcess.stdout.on('data', (data) => {
         'gf_delete_field',
         'gf_list_field_types'
       ];
-      
+
       console.log('\n📋 Checking for field operation tools:');
-      
+
       let allFound = true;
       fieldTools.forEach(toolName => {
         const found = tools.some(tool => tool.name === toolName);
@@ -80,11 +80,11 @@ serverProcess.stdout.on('data', (data) => {
           allFound = false;
         }
       });
-      
+
       console.log(`\n📊 Summary:`);
       console.log(`  Total tools registered: ${tools.length}`);
       console.log(`  Field operations tools: ${fieldTools.filter(t => tools.some(tool => tool.name === t)).length}/${fieldTools.length}`);
-      
+
       if (allFound) {
         console.log('\n🎉 All field operation tools successfully integrated!');
         process.exit(0);

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Environment Check Script for Gravity Forms MCP Server
+ * Environment Check Script for Gravity MCP
  * Validates environment configuration and tests API connection
  */
 
@@ -12,7 +12,7 @@ import { AuthManager, validateRestApiAccess } from '../src/config/auth.js';
 // Load environment variables
 dotenv.config();
 
-console.log('🔍 Gravity Forms MCP Server - Environment Check');
+console.log('🔍 Gravity MCP - Environment Check');
 console.log('='.repeat(50));
 
 // Check Node.js version
@@ -46,7 +46,7 @@ required.forEach(key => {
   } else {
     configured.push(key);
     const value = process.env[key];
-    const masked = key.includes('SECRET') 
+    const masked = key.includes('SECRET')
       ? value.substring(0, 5) + '...' + value.substring(value.length - 3)
       : value;
     console.log(`✅ ${key}: ${masked}`);
@@ -103,28 +103,28 @@ async function testConnection() {
   try {
     // Create auth manager
     const authManager = new AuthManager(process.env);
-    
+
     // Create HTTP client
     const httpClient = axios.create({
       baseURL: `${baseUrl}/wp-json/gf/v2`,
       timeout: parseInt(optional.GRAVITY_FORMS_TIMEOUT)
     });
-    
+
     // Test connection
     console.log('  Authenticating...');
     const connectionResult = await authManager.testConnection(httpClient);
-    
+
     if (connectionResult.success) {
       console.log(`✅ Successfully connected using ${connectionResult.method}`);
-      
+
       // Validate REST API access
       console.log('\n🔍 Validating REST API Access...');
       const validation = await validateRestApiAccess(httpClient, authManager);
-      
+
       if (validation.available) {
         console.log(`✅ REST API is available`);
         console.log(`  Coverage: ${validation.coverage} endpoints`);
-        
+
         if (validation.fullAccess) {
           console.log('✅ Full API access confirmed');
         } else {
@@ -145,15 +145,15 @@ async function testConnection() {
       }
       process.exit(1);
     }
-    
+
   } catch (error) {
     console.error('❌ Connection test failed:', error.message);
-    
+
     if (error.response) {
       console.error('  Status:', error.response.status);
       console.error('  Message:', error.response.data?.message || 'Unknown error');
     }
-    
+
     process.exit(1);
   }
 }
@@ -172,7 +172,7 @@ if (deleteEnabled) {
 testConnection().then(() => {
   console.log('\n' + '='.repeat(50));
   console.log('✅ Environment check completed successfully!');
-  console.log('Your Gravity Forms MCP Server is ready to use.');
+  console.log('Your Gravity MCP is ready to use.');
   console.log('\nTo start the server, run:');
   console.log('  npm start');
   console.log('\nTo run tests:');

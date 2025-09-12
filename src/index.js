@@ -8,9 +8,9 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { 
-  ListToolsRequestSchema, 
-  CallToolRequestSchema 
+import {
+  ListToolsRequestSchema,
+  CallToolRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import dotenv from 'dotenv';
 import GravityFormsClient from './gravity-forms-client.js';
@@ -46,11 +46,11 @@ async function initializeClient() {
   try {
     gravityFormsClient = new GravityFormsClient(process.env);
     const validation = await gravityFormsClient.initialize();
-    
+
     if (!validation.available) {
       throw new Error(`Failed to initialize Gravity Forms client: ${validation.error}`);
     }
-    
+
     // Initialize field operations infrastructure
     fieldValidator = new FieldAwareValidator();
     fieldOperations = createFieldOperations(
@@ -58,8 +58,8 @@ async function initializeClient() {
       fieldRegistry,
       fieldValidator
     );
-    
-    console.log('✅ Gravity Forms MCP Server initialized successfully');
+
+    console.log('✅ Gravity MCP initialized successfully');
     console.log('✅ Field operations infrastructure initialized');
     return true;
   } catch (error) {
@@ -91,10 +91,10 @@ function wrapHandler(handler) {
     if (!gravityFormsClient) {
       return createErrorResponse('Gravity Forms client not initialized');
     }
-    
+
     try {
       const result = await handler(params);
-      
+
       // MCP expects content to be an array of content blocks
       // Each block should have a type (usually "text") and the actual content
       return {
@@ -126,7 +126,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            include: { 
+            include: {
               type: 'array',
               items: { type: 'number' },
               description: 'Array of form IDs to include (returns full form details)'
@@ -627,11 +627,11 @@ async function main() {
 
     // Create stdio transport
     const transport = new StdioServerTransport();
-    
+
     // Connect server to transport
     await server.connect(transport);
-    
-    console.log('🚀 Gravity Forms MCP Server running on stdio');
+
+    console.log('🚀 Gravity MCP running on stdio');
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
@@ -640,12 +640,12 @@ async function main() {
 
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
-  console.log('\n👋 Shutting down Gravity Forms MCP Server...');
+  console.log('\n👋 Shutting down Gravity MCP...');
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  console.log('\n👋 Shutting down Gravity Forms MCP Server...');
+  console.log('\n👋 Shutting down Gravity MCP...');
   process.exit(0);
 });
 

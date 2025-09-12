@@ -1,13 +1,13 @@
 /**
- * Feeds Endpoint Tests for Gravity Forms MCP Server
+ * Feeds Endpoint Tests for Gravity MCP
  * Tests all 7 add-on feed management tools
  */
 
 import GravityFormsClient from '../gravity-forms-client.js';
-import { 
-  TestRunner, 
-  TestAssert, 
-  MockHttpClient, 
+import {
+  TestRunner,
+  TestAssert,
+  MockHttpClient,
   MockResponse,
   setupTestEnvironment,
   generateMockFeed,
@@ -23,11 +23,11 @@ let testEnv;
 suite.beforeEach(() => {
   testEnv = setupTestEnvironment();
   mockHttpClient = new MockHttpClient();
-  
+
   client = new GravityFormsClient(testEnv);
   client.httpClient = mockHttpClient;
   client.allowDelete = true;
-  
+
   mockHttpClient.setMockResponse('GET', '/forms', new MockResponse({ forms: [] }));
 });
 
@@ -40,11 +40,11 @@ suite.test('List Feeds: Should list all feeds', async () => {
     generateMockFeed(1, 'gravityformsmailchimp'),
     generateMockFeed(2, 'gravityformspaypal')
   ];
-  
+
   mockHttpClient.setMockResponse('GET', '/feeds', new MockResponse(mockFeeds));
-  
+
   const result = await client.listFeeds();
-  
+
   TestAssert.lengthOf(result.feeds, 2);
   TestAssert.equal(result.feeds[0].addon_slug, 'gravityformsmailchimp');
   TestAssert.equal(result.total_count, 2);
@@ -55,11 +55,11 @@ suite.test('List Feeds: Should filter by addon', async () => {
     generateMockFeed(1, 'gravityformsmailchimp', { id: 10 }),
     generateMockFeed(2, 'gravityformsmailchimp', { id: 11 })
   ];
-  
+
   mockHttpClient.setMockResponse('GET', '/feeds', new MockResponse(mailchimpFeeds));
-  
+
   const result = await client.listFeeds({ addon: 'gravityformsmailchimp' });
-  
+
   TestAssert.lengthOf(result.feeds, 2);
   TestAssert.equal(result.filter, 'gravityformsmailchimp');
   result.feeds.forEach(feed => {
@@ -72,11 +72,11 @@ suite.test('List Feeds: Should filter by form_id', async () => {
     generateMockFeed(5, 'gravityformsmailchimp'),
     generateMockFeed(5, 'gravityformsstripe')
   ];
-  
+
   mockHttpClient.setMockResponse('GET', '/feeds', new MockResponse(formFeeds));
-  
+
   const result = await client.listFeeds({ form_id: 5 });
-  
+
   TestAssert.lengthOf(result.feeds, 2);
   result.feeds.forEach(feed => {
     TestAssert.equal(feed.form_id, 5);
@@ -97,11 +97,11 @@ suite.test('List Feeds: Should validate addon slug format', async () => {
 
 suite.test('Get Feed: Should get specific feed by ID', async () => {
   const mockFeed = generateMockFeed(1, 'gravityformsmailchimp', { id: 123 });
-  
+
   mockHttpClient.setMockResponse('GET', '/feeds/123', new MockResponse(mockFeed));
-  
+
   const result = await client.getFeed({ id: 123 });
-  
+
   TestAssert.equal(result.feed.id, 123);
   TestAssert.equal(result.addon_slug, 'gravityformsmailchimp');
   TestAssert.equal(result.form_id, 1);
@@ -130,11 +130,11 @@ suite.test('Get Feed: Should handle complex feed configuration', async () => {
       }
     }
   });
-  
+
   mockHttpClient.setMockResponse('GET', '/feeds/1', new MockResponse(complexFeed));
-  
+
   const result = await client.getFeed({ id: 1 });
-  
+
   TestAssert.equal(result.feed.meta.transactionType, 'product');
   TestAssert.isTrue(result.feed.meta.conditionalLogic.enabled);
 });
@@ -144,7 +144,7 @@ suite.test('Get Feed: Should handle non-existent feed (404)', async () => {
     { message: 'Feed not found' },
     404
   ));
-  
+
   await TestAssert.throwsAsync(
     () => client.getFeed({ id: 999 }),
     'not found',
@@ -162,11 +162,11 @@ suite.test('List Form Feeds: Should get all feeds for specific form', async () =
     generateMockFeed(10, 'gravityformsstripe'),
     generateMockFeed(10, 'gravityformspaypal')
   ];
-  
+
   mockHttpClient.setMockResponse('GET', '/forms/10/feeds', new MockResponse(formFeeds));
-  
+
   const result = await client.listFormFeeds({ form_id: 10 });
-  
+
   TestAssert.lengthOf(result.feeds, 3);
   TestAssert.equal(result.form_id, 10);
   TestAssert.equal(result.total_count, 3);
@@ -174,9 +174,9 @@ suite.test('List Form Feeds: Should get all feeds for specific form', async () =
 
 suite.test('List Form Feeds: Should handle form with no feeds', async () => {
   mockHttpClient.setMockResponse('GET', '/forms/1/feeds', new MockResponse([]));
-  
+
   const result = await client.listFormFeeds({ form_id: 1 });
-  
+
   TestAssert.lengthOf(result.feeds, 0);
   TestAssert.equal(result.total_count, 0);
 });
@@ -195,9 +195,9 @@ suite.test('List Form Feeds: Should require form_id', async () => {
 
 suite.test('Create Feed: Should create new MailChimp feed', async () => {
   const newFeed = generateMockFeed(1, 'gravityformsmailchimp', { id: 500 });
-  
+
   mockHttpClient.setMockResponse('POST', '/feeds', new MockResponse(newFeed));
-  
+
   const result = await client.createFeed({
     addon_slug: 'gravityformsmailchimp',
     form_id: 1,
@@ -210,7 +210,7 @@ suite.test('Create Feed: Should create new MailChimp feed', async () => {
       mappedFields_LNAME: '1.6'
     }
   });
-  
+
   TestAssert.isTrue(result.created);
   TestAssert.equal(result.feed.id, 500);
   TestAssert.equal(result.addon_slug, 'gravityformsmailchimp');
@@ -233,14 +233,14 @@ suite.test('Create Feed: Should create Stripe feed with complex settings', async
       setupFee_amount: '25.00'
     }
   };
-  
+
   mockHttpClient.setMockResponse('POST', '/feeds', new MockResponse({
     ...stripeFeed,
     id: 600
   }));
-  
+
   const result = await client.createFeed(stripeFeed);
-  
+
   TestAssert.isTrue(result.created);
   TestAssert.equal(result.feed.meta.transactionType, 'subscription');
   TestAssert.equal(result.feed.meta.setupFee_amount, '25.00');
@@ -282,9 +282,9 @@ suite.test('Update Feed: Should update existing feed completely', async () => {
       mailchimpList: 'newlist456'
     }
   });
-  
+
   mockHttpClient.setMockResponse('PUT', '/feeds/100', new MockResponse(updatedFeed));
-  
+
   const result = await client.updateFeed({
     id: 100,
     is_active: true,
@@ -293,7 +293,7 @@ suite.test('Update Feed: Should update existing feed completely', async () => {
       mailchimpList: 'newlist456'
     }
   });
-  
+
   TestAssert.isTrue(result.updated);
   TestAssert.equal(result.feed.meta.feedName, 'Updated Feed Name');
   TestAssert.equal(result.message, 'Feed updated successfully');
@@ -313,15 +313,15 @@ suite.test('Update Feed: Should handle conditional logic updates', async () => {
       }
     }
   };
-  
+
   mockHttpClient.setMockResponse('PUT', '/feeds/1', new MockResponse({
     ...feedWithLogic,
     addon_slug: 'gravityformsmailchimp',
     form_id: 1
   }));
-  
+
   const result = await client.updateFeed(feedWithLogic);
-  
+
   TestAssert.isTrue(result.feed.meta.conditionalLogic.enabled);
   TestAssert.equal(result.feed.meta.conditionalLogic.actionType, 'hide');
 });
@@ -335,14 +335,14 @@ suite.test('Patch Feed: Should partially update feed', async () => {
     id: 100,
     is_active: false
   });
-  
+
   mockHttpClient.setMockResponse('PATCH', '/feeds/100', new MockResponse(patchedFeed));
-  
+
   const result = await client.patchFeed({
     id: 100,
     is_active: false
   });
-  
+
   TestAssert.isTrue(result.patched);
   TestAssert.isFalse(result.feed.is_active);
   TestAssert.includes(result.updated_fields, 'is_active');
@@ -355,7 +355,7 @@ suite.test('Patch Feed: Should update only specified meta fields', async () => {
     mailchimpList: 'list123',
     mappedFields_EMAIL: '2'
   };
-  
+
   const patchedFeed = generateMockFeed(1, 'gravityformsmailchimp', {
     id: 1,
     meta: {
@@ -363,14 +363,14 @@ suite.test('Patch Feed: Should update only specified meta fields', async () => {
       feedName: 'New Name'
     }
   });
-  
+
   mockHttpClient.setMockResponse('PATCH', '/feeds/1', new MockResponse(patchedFeed));
-  
+
   const result = await client.patchFeed({
     id: 1,
     meta: { feedName: 'New Name' }
   });
-  
+
   TestAssert.equal(result.feed.meta.feedName, 'New Name');
   TestAssert.equal(result.feed.meta.mailchimpList, 'list123');
 });
@@ -381,9 +381,9 @@ suite.test('Patch Feed: Should update only specified meta fields', async () => {
 
 suite.test('Delete Feed: Should delete feed', async () => {
   mockHttpClient.setMockResponse('DELETE', '/feeds/100', new MockResponse({}));
-  
+
   const result = await client.deleteFeed({ id: 100 });
-  
+
   TestAssert.isTrue(result.deleted);
   TestAssert.equal(result.feed_id, 100);
   TestAssert.equal(result.message, 'Feed deleted successfully');
@@ -391,7 +391,7 @@ suite.test('Delete Feed: Should delete feed', async () => {
 
 suite.test('Delete Feed: Should require ALLOW_DELETE=true', async () => {
   client.allowDelete = false;
-  
+
   await TestAssert.throwsAsync(
     () => client.deleteFeed({ id: 1 }),
     'Delete operations are disabled',
@@ -416,15 +416,15 @@ suite.test('Edge Case: Should handle feeds for all supported addons', async () =
     'gravityformstwilio',
     'gravityformsdropbox'
   ];
-  
-  const feeds = supportedAddons.map((addon, i) => 
+
+  const feeds = supportedAddons.map((addon, i) =>
     generateMockFeed(1, addon, { id: i + 1 })
   );
-  
+
   mockHttpClient.setMockResponse('GET', '/feeds', new MockResponse(feeds));
-  
+
   const result = await client.listFeeds();
-  
+
   TestAssert.lengthOf(result.feeds, 10);
   TestAssert.equal(result.feeds[9].addon_slug, 'gravityformsdropbox');
 });
@@ -455,11 +455,11 @@ suite.test('Edge Case: Should handle feed with complex field mappings', async ()
       ]
     }
   };
-  
+
   mockHttpClient.setMockResponse('GET', '/feeds/1', new MockResponse(complexMapping));
-  
+
   const result = await client.getFeed({ id: 1 });
-  
+
   TestAssert.equal(result.feed.meta.mappedFields.email, '2');
   TestAssert.lengthOf(result.feed.meta.customFields, 2);
 });
@@ -469,7 +469,7 @@ suite.test('Failure Mode: Should handle addon not installed', async () => {
     { message: 'Add-on gravityformsunknown is not installed or active' },
     400
   ));
-  
+
   await TestAssert.throwsAsync(
     () => client.createFeed({
       addon_slug: 'gravityformsunknown',
@@ -486,7 +486,7 @@ suite.test('Failure Mode: Should handle invalid field mappings', async () => {
     { message: 'Invalid field mapping: Field 99 does not exist' },
     400
   ));
-  
+
   await TestAssert.throwsAsync(
     () => client.createFeed({
       addon_slug: 'gravityformsmailchimp',

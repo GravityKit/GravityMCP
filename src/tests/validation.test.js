@@ -1,13 +1,13 @@
 /**
- * Validation Tests for Gravity Forms MCP Server
+ * Validation Tests for Gravity MCP
  * Tests input validation for all tools and edge cases
  */
 
 import GravityFormsClient from '../gravity-forms-client.js';
-import { 
-  TestRunner, 
-  TestAssert, 
-  MockHttpClient, 
+import {
+  TestRunner,
+  TestAssert,
+  MockHttpClient,
   MockResponse,
   setupTestEnvironment
 } from './helpers.js';
@@ -21,10 +21,10 @@ let testEnv;
 suite.beforeEach(() => {
   testEnv = setupTestEnvironment();
   mockHttpClient = new MockHttpClient();
-  
+
   client = new GravityFormsClient(testEnv);
   client.httpClient = mockHttpClient;
-  
+
   mockHttpClient.setMockResponse('GET', '/forms', new MockResponse({ forms: [] }));
 });
 
@@ -39,14 +39,14 @@ suite.test('Required Parameters: Forms endpoints', async () => {
     'id is required',
     'getForm should require id'
   );
-  
+
   // gf_update_form requires id
   await TestAssert.throwsAsync(
     () => client.updateForm({ title: 'Test' }),
     'id is required',
     'updateForm should require id'
   );
-  
+
   // gf_delete_form requires id
   client.allowDelete = true;
   await TestAssert.throwsAsync(
@@ -54,7 +54,7 @@ suite.test('Required Parameters: Forms endpoints', async () => {
     'id is required',
     'deleteForm should require id'
   );
-  
+
   // gf_create_form requires title
   await TestAssert.throwsAsync(
     () => client.createForm({ fields: [] }),
@@ -70,21 +70,21 @@ suite.test('Required Parameters: Entries endpoints', async () => {
     'id is required',
     'getEntry should require id'
   );
-  
+
   // gf_create_entry requires form_id
   await TestAssert.throwsAsync(
     () => client.createEntry({ '1': 'value' }),
     'form_id is required',
     'createEntry should require form_id'
   );
-  
+
   // gf_update_entry requires id
   await TestAssert.throwsAsync(
     () => client.updateEntry({ '1': 'value' }),
     'id is required',
     'updateEntry should require id'
   );
-  
+
   // gf_delete_entry requires id
   client.allowDelete = true;
   await TestAssert.throwsAsync(
@@ -101,26 +101,26 @@ suite.test('Required Parameters: Feeds endpoints', async () => {
     'id is required',
     'getFeed should require id'
   );
-  
+
   // gf_create_feed requires addon_slug, form_id, and meta
   await TestAssert.throwsAsync(
     () => client.createFeed({ form_id: 1, meta: {} }),
     'addon_slug is required',
     'createFeed should require addon_slug'
   );
-  
+
   await TestAssert.throwsAsync(
     () => client.createFeed({ addon_slug: 'test', meta: {} }),
     'form_id is required',
     'createFeed should require form_id'
   );
-  
+
   await TestAssert.throwsAsync(
     () => client.createFeed({ addon_slug: 'test', form_id: 1 }),
     'meta is required',
     'createFeed should require meta'
   );
-  
+
   // gf_list_form_feeds requires form_id
   await TestAssert.throwsAsync(
     () => client.listFormFeeds({}),
@@ -136,7 +136,7 @@ suite.test('Required Parameters: Submissions', async () => {
     'form_id is required',
     'submitFormData should require form_id'
   );
-  
+
   // gf_validate_submission requires form_id
   await TestAssert.throwsAsync(
     () => client.validateSubmission({ input_1: 'value' }),
@@ -161,7 +161,7 @@ suite.test('Required Parameters: Utilities', async () => {
     'form_id is required',
     'getFieldFilters should require form_id'
   );
-  
+
   // gf_get_results requires form_id
   await TestAssert.throwsAsync(
     () => client.getResults({}),
@@ -181,14 +181,14 @@ suite.test('Type Validation: Numeric IDs', async () => {
     'must be a positive integer',
     'Form ID should be numeric'
   );
-  
+
   // Entry ID should be numeric
   await TestAssert.throwsAsync(
     () => client.getEntry({ id: 'not-a-number' }),
     'must be a positive integer',
     'Entry ID should be numeric'
   );
-  
+
   // Feed ID should be numeric
   await TestAssert.throwsAsync(
     () => client.getFeed({ id: 'not-a-number' }),
@@ -205,7 +205,7 @@ suite.test('Type Validation: Booleans', async () => {
     'must be a boolean',
     'Force parameter should be boolean'
   );
-  
+
   // Active parameter should be boolean
   await TestAssert.throwsAsync(
     () => client.listForms({ active: 'true' }),
@@ -221,14 +221,14 @@ suite.test('Type Validation: Arrays', async () => {
     'must be an array',
     'Include parameter should be array'
   );
-  
+
   // Exclude parameter should be array
   await TestAssert.throwsAsync(
     () => client.listForms({ exclude: '4,5,6' }),
     'must be an array',
     'Exclude parameter should be array'
   );
-  
+
   // Form fields should be array
   await TestAssert.throwsAsync(
     () => client.createForm({ title: 'Test', fields: 'not-an-array' }),
@@ -244,13 +244,13 @@ suite.test('Type Validation: Objects', async () => {
     'must be an object',
     'Search parameter should be object'
   );
-  
+
   // Feed meta should be object
   await TestAssert.throwsAsync(
-    () => client.createFeed({ 
-      addon_slug: 'test', 
-      form_id: 1, 
-      meta: 'not-an-object' 
+    () => client.createFeed({
+      addon_slug: 'test',
+      form_id: 1,
+      meta: 'not-an-object'
     }),
     'must be an object',
     'Meta parameter should be object'
@@ -268,9 +268,9 @@ suite.test('Enum Validation: Status values', async () => {
     'must be one of',
     'Status should validate against enum'
   );
-  
+
   mockHttpClient.setMockResponse('GET', '/forms', new MockResponse({ forms: [] }));
-  
+
   // Valid status values should work
   await client.listForms({ status: 'active' });
   await client.listForms({ status: 'inactive' });
@@ -292,13 +292,13 @@ suite.test('Enum Validation: Search operators', async () => {
     'Invalid operator',
     'Should validate search operators'
   );
-  
+
   // Valid operators
   const validOperators = [
-    '=', 'IS', 'CONTAINS', 'IS NOT', 'ISNOT', '<>', 
+    '=', 'IS', 'CONTAINS', 'IS NOT', 'ISNOT', '<>',
     'LIKE', 'NOT IN', 'NOTIN', 'IN', '>', '<', '>=', '<='
   ];
-  
+
   for (const operator of validOperators) {
     mockHttpClient.setMockResponse('GET', '/entries', new MockResponse([]));
     await client.listEntries({
@@ -325,7 +325,7 @@ suite.test('Enum Validation: Search mode', async () => {
     'must be one of',
     'Should validate search mode'
   );
-  
+
   // Valid search modes
   mockHttpClient.setMockResponse('GET', '/entries', new MockResponse([]));
   await client.listEntries({
@@ -334,7 +334,7 @@ suite.test('Enum Validation: Search mode', async () => {
       field_filters: []
     }
   });
-  
+
   await client.listEntries({
     search: {
       mode: 'all',
@@ -355,7 +355,7 @@ suite.test('Range Validation: Entries Pagination', async () => {
     'must be at least 1',
     'Page size should be positive'
   );
-  
+
   await TestAssert.throwsAsync(
     () => client.listEntries({ paging: { page_size: 201 } }),
     'cannot exceed 200',
@@ -370,7 +370,7 @@ suite.test('Range Validation: String lengths', async () => {
     'cannot be empty',
     'Form title cannot be empty'
   );
-  
+
   // Form title maximum length
   const veryLongTitle = 'a'.repeat(256);
   await TestAssert.throwsAsync(
@@ -394,12 +394,12 @@ suite.test('Format Validation: Email addresses', async () => {
     'valid email',
     'Should validate email format'
   );
-  
+
   // Valid email should work
-  mockHttpClient.setMockResponse('POST', '/entries/1/notifications', 
+  mockHttpClient.setMockResponse('POST', '/entries/1/notifications',
     new MockResponse({ notifications_sent: [] })
   );
-  
+
   await client.sendNotifications({
     entry_id: 1,
     to: 'test@example.com'
@@ -419,12 +419,12 @@ suite.test('Format Validation: URLs', async () => {
     'valid URL',
     'Should validate URL format'
   );
-  
+
   // Valid URL should work
-  mockHttpClient.setMockResponse('POST', '/forms', 
+  mockHttpClient.setMockResponse('POST', '/forms',
     new MockResponse({ id: 1, title: 'Test' })
   );
-  
+
   await client.createForm({
     title: 'Test',
     confirmations: [{
@@ -445,10 +445,10 @@ suite.test('Format Validation: Date formats', async () => {
     'ISO 8601',
     'Should validate date format'
   );
-  
+
   // Valid ISO 8601 date should work
   mockHttpClient.setMockResponse('GET', '/entries', new MockResponse([]));
-  
+
   await client.listEntries({
     search: {
       start_date: '2024-01-01T00:00:00Z'
@@ -463,34 +463,34 @@ suite.test('Format Validation: Date formats', async () => {
 suite.test('Permission Validation: Delete operations', async () => {
   // Delete operations should be disabled by default
   client.allowDelete = false;
-  
+
   await TestAssert.throwsAsync(
     () => client.deleteForm({ id: 1 }),
     'Delete operations are disabled',
     'Should block delete when disabled'
   );
-  
+
   await TestAssert.throwsAsync(
     () => client.deleteEntry({ id: 1 }),
     'Delete operations are disabled',
     'Should block entry delete when disabled'
   );
-  
+
   await TestAssert.throwsAsync(
     () => client.deleteFeed({ id: 1 }),
     'Delete operations are disabled',
     'Should block feed delete when disabled'
   );
-  
+
   // Enable delete operations
   client.allowDelete = true;
-  
+
   mockHttpClient.setMockResponse('DELETE', '/forms/1', new MockResponse({}));
   await client.deleteForm({ id: 1 });
-  
+
   mockHttpClient.setMockResponse('DELETE', '/entries/1', new MockResponse({}));
   await client.deleteEntry({ id: 1 });
-  
+
   mockHttpClient.setMockResponse('DELETE', '/feeds/1', new MockResponse({}));
   await client.deleteFeed({ id: 1 });
 });
@@ -501,30 +501,30 @@ suite.test('Permission Validation: Delete operations', async () => {
 
 suite.test('Special Characters: Unicode handling', async () => {
   // Unicode in form title
-  mockHttpClient.setMockResponse('POST', '/forms', 
+  mockHttpClient.setMockResponse('POST', '/forms',
     new MockResponse({ id: 1, title: 'Test 🚀 Form' })
   );
-  
+
   const result = await client.createForm({
     title: 'Test 🚀 Form',
     description: 'Includes emoji 😀 and special chars: é, ñ, ü'
   });
-  
+
   TestAssert.equal(result.form.title, 'Test 🚀 Form');
 });
 
 suite.test('Special Characters: HTML encoding', async () => {
   // HTML entities should be handled properly
-  mockHttpClient.setMockResponse('POST', '/entries', 
+  mockHttpClient.setMockResponse('POST', '/entries',
     new MockResponse({ id: 1 })
   );
-  
+
   const result = await client.createEntry({
     form_id: 1,
     '1': '<script>alert("XSS")</script>',
     '2': 'Normal & special < > characters'
   });
-  
+
   TestAssert.isTrue(result.created);
 });
 
@@ -539,7 +539,7 @@ suite.test('Addon Slug Validation: Format requirements', async () => {
     'valid slug format',
     'Should validate addon slug format'
   );
-  
+
   // Valid addon slugs
   const validSlugs = [
     'gravityformsmailchimp',
@@ -548,7 +548,7 @@ suite.test('Addon Slug Validation: Format requirements', async () => {
     'gravityformsauthorizenet',
     'gravityformszapier'
   ];
-  
+
   for (const slug of validSlugs) {
     mockHttpClient.setMockResponse('GET', '/feeds', new MockResponse([]));
     await client.listFeeds({ addon: slug });
@@ -571,7 +571,7 @@ suite.test('Complex Validation: Multi-field dependencies', async () => {
     'field_filters',
     'Search should require field_filters'
   );
-  
+
   // Field filters require all properties
   await TestAssert.throwsAsync(
     () => client.listEntries({
@@ -603,12 +603,12 @@ suite.test('Complex Validation: Conditional logic validation', async () => {
     'rules',
     'Conditional logic should require rules'
   );
-  
+
   // Valid conditional logic
-  mockHttpClient.setMockResponse('POST', '/feeds', 
+  mockHttpClient.setMockResponse('POST', '/feeds',
     new MockResponse({ id: 1 })
   );
-  
+
   await client.createFeed({
     addon_slug: 'test',
     form_id: 1,
@@ -632,20 +632,20 @@ suite.test('Complex Validation: Conditional logic validation', async () => {
 
 suite.test('Edge Cases: Empty arrays and objects', async () => {
   // Empty arrays should be allowed where valid
-  mockHttpClient.setMockResponse('POST', '/forms', 
+  mockHttpClient.setMockResponse('POST', '/forms',
     new MockResponse({ id: 1 })
   );
-  
+
   await client.createForm({
     title: 'Test',
     fields: [] // Empty fields array is valid
   });
-  
+
   // Empty objects should be allowed for meta
-  mockHttpClient.setMockResponse('POST', '/feeds', 
+  mockHttpClient.setMockResponse('POST', '/feeds',
     new MockResponse({ id: 1 })
   );
-  
+
   await client.createFeed({
     addon_slug: 'test',
     form_id: 1,
@@ -656,12 +656,12 @@ suite.test('Edge Cases: Empty arrays and objects', async () => {
 suite.test('Edge Cases: Null vs undefined handling', async () => {
   // Undefined optional parameters should be ignored
   mockHttpClient.setMockResponse('GET', '/forms', new MockResponse({ forms: [] }));
-  
+
   await client.listForms({
     page: undefined,
     per_page: undefined
   });
-  
+
   // Null values should be validated
   await TestAssert.throwsAsync(
     () => client.getForm({ id: null }),
@@ -677,16 +677,16 @@ suite.test('Edge Cases: Whitespace in strings', async () => {
     'cannot be empty',
     'Whitespace-only title should be invalid'
   );
-  
+
   // Leading/trailing whitespace should be trimmed
-  mockHttpClient.setMockResponse('POST', '/forms', 
+  mockHttpClient.setMockResponse('POST', '/forms',
     new MockResponse({ id: 1, title: 'Test Form' })
   );
-  
+
   const result = await client.createForm({
     title: '  Test Form  '
   });
-  
+
   TestAssert.equal(result.form.title, 'Test Form');
 });
 

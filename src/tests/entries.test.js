@@ -1,13 +1,13 @@
 /**
- * Entries Endpoint Tests for Gravity Forms MCP Server
+ * Entries Endpoint Tests for Gravity MCP
  * Tests all 6 entries management tools with comprehensive coverage
  */
 
 import GravityFormsClient from '../gravity-forms-client.js';
-import { 
-  TestRunner, 
-  TestAssert, 
-  MockHttpClient, 
+import {
+  TestRunner,
+  TestAssert,
+  MockHttpClient,
   MockResponse,
   setupTestEnvironment,
   generateMockEntry,
@@ -26,11 +26,11 @@ let testEnv;
 suite.beforeEach(() => {
   testEnv = setupTestEnvironment();
   mockHttpClient = new MockHttpClient();
-  
+
   client = new GravityFormsClient(testEnv);
   client.httpClient = mockHttpClient;
   client.allowDelete = true;
-  
+
   mockHttpClient.setMockResponse('GET', '/forms', new MockResponse({ forms: [] }));
 });
 
@@ -43,14 +43,14 @@ suite.test('List Entries: Should list all entries with pagination', async () => 
     generateMockEntry(1, { id: 101 }),
     generateMockEntry(1, { id: 102 })
   ];
-  
+
   mockHttpClient.setMockResponse('GET', '/entries', new MockResponse({
     entries: mockEntries,
     total_count: 2
   }));
-  
+
   const result = await client.listEntries();
-  
+
   TestAssert.lengthOf(result.entries, 2);
   TestAssert.equal(result.entries[0].id, 101);
   TestAssert.equal(result.total_count, 2);
@@ -61,13 +61,13 @@ suite.test('List Entries: Should filter by form IDs', async () => {
     generateMockEntry(5, { id: 1 }),
     generateMockEntry(5, { id: 2 })
   ];
-  
+
   mockHttpClient.setMockResponse('GET', '/entries', new MockResponse({
     entries: formEntries
   }));
-  
+
   const result = await client.listEntries({ form_ids: [5] });
-  
+
   TestAssert.lengthOf(result.entries, 2);
   TestAssert.equal(result.entries[0].form_id, 5);
 });
@@ -76,13 +76,13 @@ suite.test('List Entries: Should filter by status', async () => {
   const activeEntries = [
     generateMockEntry(1, { id: 1, status: 'active' })
   ];
-  
+
   mockHttpClient.setMockResponse('GET', '/entries', new MockResponse({
     entries: activeEntries
   }));
-  
+
   const result = await client.listEntries({ status: 'active' });
-  
+
   TestAssert.lengthOf(result.entries, 1);
   TestAssert.equal(result.entries[0].status, 'active');
 });
@@ -92,15 +92,15 @@ suite.test('List Entries: Should handle complex search with field filters', asyn
     generateFieldFilter('1', 'John', 'CONTAINS'),
     generateFieldFilter('date_created', '2024-01-01', '>=')
   ];
-  
+
   const search = generateSearchParams(filters, 'all');
-  
+
   mockHttpClient.setMockResponse('GET', '/entries', new MockResponse({
     entries: [generateMockEntry()]
   }));
-  
+
   const result = await client.listEntries({ search });
-  
+
   TestAssert.isNotNull(result.search_criteria);
   TestAssert.equal(result.search_criteria.mode, 'all');
   TestAssert.lengthOf(result.search_criteria.field_filters, 2);
@@ -108,26 +108,26 @@ suite.test('List Entries: Should handle complex search with field filters', asyn
 
 suite.test('List Entries: Should handle sorting', async () => {
   const sorting = generateSortingParams('date_created', 'desc');
-  
+
   mockHttpClient.setMockResponse('GET', '/entries', new MockResponse({
     entries: [generateMockEntry()]
   }));
-  
+
   const result = await client.listEntries({ sorting });
-  
+
   TestAssert.isNotNull(result.sorting);
   TestAssert.equal(result.sorting.direction, 'desc');
 });
 
 suite.test('List Entries: Should handle paging parameters', async () => {
   const paging = generatePagingParams(50, 2);
-  
+
   mockHttpClient.setMockResponse('GET', '/entries', new MockResponse({
     entries: []
   }));
-  
+
   const result = await client.listEntries({ paging });
-  
+
   const request = mockHttpClient.getRequests()[0];
   TestAssert.includes(JSON.stringify(request.config.params), 'page_size');
 });
@@ -140,7 +140,7 @@ suite.test('List Entries: Should validate search operators', async () => {
       operator: 'INVALID_OP'
     }]
   };
-  
+
   await TestAssert.throwsAsync(
     () => client.listEntries({ search: invalidSearch }),
     'Invalid operator',
@@ -154,11 +154,11 @@ suite.test('List Entries: Should validate search operators', async () => {
 
 suite.test('Get Entry: Should get specific entry by ID', async () => {
   const mockEntry = generateMockEntry(1, { id: 123 });
-  
+
   mockHttpClient.setMockResponse('GET', '/entries/123', new MockResponse(mockEntry));
-  
+
   const result = await client.getEntry({ id: 123 });
-  
+
   TestAssert.equal(result.entry.id, 123);
   TestAssert.equal(result.form_id, 1);
   TestAssert.equal(result.status, 'active');
@@ -173,11 +173,11 @@ suite.test('Get Entry: Should handle entry with file uploads', async () => {
       'https://example.com/uploads/file3.png'
     ])
   });
-  
+
   mockHttpClient.setMockResponse('GET', '/entries/1', new MockResponse(entryWithFiles));
-  
+
   const result = await client.getEntry({ id: 1 });
-  
+
   TestAssert.includes(result.entry['5'], 'file1.pdf');
 });
 
@@ -189,11 +189,11 @@ suite.test('Get Entry: Should handle entry with payment fields', async () => {
     payment_date: '2024-01-15',
     transaction_id: 'TXN123456'
   });
-  
+
   mockHttpClient.setMockResponse('GET', '/entries/1', new MockResponse(paymentEntry));
-  
+
   const result = await client.getEntry({ id: 1 });
-  
+
   TestAssert.equal(result.entry.payment_status, 'Paid');
   TestAssert.equal(result.entry.payment_amount, '99.99');
 });
@@ -203,7 +203,7 @@ suite.test('Get Entry: Should handle non-existent entry (404)', async () => {
     { message: 'Entry not found' },
     404
   ));
-  
+
   await TestAssert.throwsAsync(
     () => client.getEntry({ id: 999 }),
     'not found',
@@ -217,9 +217,9 @@ suite.test('Get Entry: Should handle non-existent entry (404)', async () => {
 
 suite.test('Create Entry: Should create new entry with field values', async () => {
   const newEntry = generateMockEntry(1, { id: 500 });
-  
+
   mockHttpClient.setMockResponse('POST', '/entries', new MockResponse(newEntry));
-  
+
   const result = await client.createEntry({
     form_id: 1,
     '1': 'Jane Doe',
@@ -227,7 +227,7 @@ suite.test('Create Entry: Should create new entry with field values', async () =
     '3': 'Test message',
     created_by: 1
   });
-  
+
   TestAssert.isTrue(result.created);
   TestAssert.equal(result.entry.id, 500);
   TestAssert.equal(result.message, 'Entry created successfully');
@@ -246,7 +246,7 @@ suite.test('Create Entry: Should validate field values', async () => {
     { message: 'Field validation failed', field_errors: ['Email is invalid'] },
     400
   ));
-  
+
   await TestAssert.throwsAsync(
     () => client.createEntry({
       form_id: 1,
@@ -267,14 +267,14 @@ suite.test('Create Entry: Should handle complex field types', async () => {
     '4': '2024-01-15',
     created_by: 1
   };
-  
+
   mockHttpClient.setMockResponse('POST', '/entries', new MockResponse({
     ...complexEntry,
     id: 600
   }));
-  
+
   const result = await client.createEntry(complexEntry);
-  
+
   TestAssert.isTrue(result.created);
   TestAssert.equal(result.entry['1.3'], 'First Name');
 });
@@ -292,9 +292,9 @@ suite.test('Update Entry: Should update existing entry', async () => {
     '3': 'Original Address',
     status: 'active'
   });
-  
+
   mockHttpClient.setMockResponse('GET', '/entries/100', new MockResponse(existingEntry));
-  
+
   // Then mock the PUT request with the merged data
   const updatedEntry = generateMockEntry(1, {
     id: 100,
@@ -303,15 +303,15 @@ suite.test('Update Entry: Should update existing entry', async () => {
     '3': 'Original Address',     // Preserved
     status: 'spam'
   });
-  
+
   mockHttpClient.setMockResponse('PUT', '/entries/100', new MockResponse(updatedEntry));
-  
+
   const result = await client.updateEntry({
     id: 100,
     '1': 'Updated Name',
     status: 'spam'
   });
-  
+
   TestAssert.isTrue(result.updated);
   TestAssert.equal(result.entry['1'], 'Updated Name');
   TestAssert.equal(result.message, 'Entry updated successfully');
@@ -331,23 +331,23 @@ suite.test('Update Entry: Should preserve all field data when updating single fi
     is_read: '0',
     status: 'active'
   };
-  
+
   mockHttpClient.setMockResponse('GET', '/entries/23', new MockResponse(existingEntry));
-  
+
   // Expected merged data (all fields preserved, only is_starred updated)
   const expectedMergedData = {
     ...existingEntry,
     is_starred: '1'
   };
-  
+
   mockHttpClient.setMockResponse('PUT', '/entries/23', new MockResponse(expectedMergedData));
-  
+
   // Update only the is_starred field
   const result = await client.updateEntry({
     id: 23,
     is_starred: '1'
   });
-  
+
   // Verify the PUT request was made with ALL data
   const putRequest = mockHttpClient.getRequests().find(r => r.method === 'PUT');
   TestAssert.exists(putRequest, 'PUT request should be made');
@@ -355,7 +355,7 @@ suite.test('Update Entry: Should preserve all field data when updating single fi
   TestAssert.equal(putRequest.config.data['2'], 'john@example.com', 'Field 2 should be preserved');
   TestAssert.equal(putRequest.config.data['3'], '25', 'Field 3 should be preserved');
   TestAssert.equal(putRequest.config.data.is_starred, '1', 'is_starred should be updated');
-  
+
   TestAssert.isTrue(result.updated);
   TestAssert.equal(result.entry['1'], 'John Doe', 'Original field data preserved in response');
   TestAssert.equal(result.entry.is_starred, '1', 'Updated field changed in response');
@@ -367,14 +367,14 @@ suite.test('Update Entry: Should preserve metadata when updating fields', async 
     date_created: '2024-01-01T00:00:00Z',
     created_by: 1
   });
-  
+
   mockHttpClient.setMockResponse('PUT', '/entries/1', new MockResponse(entry));
-  
+
   const result = await client.updateEntry({
     id: 1,
     '1': 'New Value'
   });
-  
+
   TestAssert.equal(result.entry.date_created, '2024-01-01T00:00:00Z');
   TestAssert.equal(result.entry.created_by, 1);
 });
@@ -396,9 +396,9 @@ suite.test('Update Entry: Should validate entry status', async () => {
 
 suite.test('Delete Entry: Should trash entry by default', async () => {
   mockHttpClient.setMockResponse('DELETE', '/entries/1', new MockResponse({}));
-  
+
   const result = await client.deleteEntry({ id: 1 });
-  
+
   TestAssert.isTrue(result.deleted);
   TestAssert.isFalse(result.permanently);
   TestAssert.equal(result.message, 'Entry moved to trash');
@@ -406,9 +406,9 @@ suite.test('Delete Entry: Should trash entry by default', async () => {
 
 suite.test('Delete Entry: Should permanently delete with force=true', async () => {
   mockHttpClient.setMockResponse('DELETE', '/entries/1', new MockResponse({}));
-  
+
   const result = await client.deleteEntry({ id: 1, force: true });
-  
+
   TestAssert.isTrue(result.deleted);
   TestAssert.isTrue(result.permanently);
   TestAssert.equal(result.message, 'Entry permanently deleted');
@@ -416,7 +416,7 @@ suite.test('Delete Entry: Should permanently delete with force=true', async () =
 
 suite.test('Delete Entry: Should require ALLOW_DELETE=true', async () => {
   client.allowDelete = false;
-  
+
   await TestAssert.throwsAsync(
     () => client.deleteEntry({ id: 1 }),
     'Delete operations are disabled',
@@ -429,17 +429,17 @@ suite.test('Delete Entry: Should require ALLOW_DELETE=true', async () => {
 // =================================
 
 suite.test('Edge Case: Should handle large datasets (1000+ entries)', async () => {
-  const largeDataset = Array.from({ length: 1000 }, (_, i) => 
+  const largeDataset = Array.from({ length: 1000 }, (_, i) =>
     generateMockEntry(1, { id: i + 1 })
   );
-  
+
   mockHttpClient.setMockResponse('GET', '/entries', new MockResponse({
     entries: largeDataset,
     total_count: 1000
   }));
-  
+
   const result = await client.listEntries({ paging: { page_size: 200 } });
-  
+
   TestAssert.equal(result.total_count, 1000);
 });
 
@@ -450,13 +450,13 @@ suite.test('Edge Case: Should handle date boundary searches', async () => {
       { key: 'date_created', value: '2024-12-31T23:59:59Z', operator: '<=' }
     ]
   };
-  
+
   mockHttpClient.setMockResponse('GET', '/entries', new MockResponse({
     entries: []
   }));
-  
+
   const result = await client.listEntries({ search });
-  
+
   TestAssert.isNotNull(result.search_criteria);
 });
 
@@ -466,11 +466,11 @@ suite.test('Edge Case: Should handle multi-page form entries', async () => {
     page_number: 3,
     resume_token: 'abc123def456'
   });
-  
+
   mockHttpClient.setMockResponse('GET', '/entries/1', new MockResponse(multiPageEntry));
-  
+
   const result = await client.getEntry({ id: 1 });
-  
+
   TestAssert.equal(result.entry.page_number, 3);
   TestAssert.equal(result.entry.resume_token, 'abc123def456');
 });
@@ -480,7 +480,7 @@ suite.test('Failure Mode: Should handle permission errors', async () => {
     { message: 'You do not have permission to view this entry' },
     403
   ));
-  
+
   await TestAssert.throwsAsync(
     () => client.getEntry({ id: 1 }),
     'permission',
@@ -493,7 +493,7 @@ suite.test('Failure Mode: Should handle database errors', async () => {
     { message: 'Database connection failed' },
     500
   ));
-  
+
   await TestAssert.throwsAsync(
     () => client.createEntry({ form_id: 1 }),
     'Server error',

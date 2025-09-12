@@ -1,5 +1,5 @@
 /**
- * Server Tools Validation Tests for Gravity Forms MCP Server
+ * Server Tools Validation Tests for Gravity MCP
  * Tests all 24 MCP tools registration, schemas, and handlers
  */
 
@@ -16,21 +16,21 @@ const EXPECTED_TOOLS = [
   'gf_update_form',
   'gf_delete_form',
   'gf_validate_form',
-  
+
   // Entries Management (5)
   'gf_list_entries',
   'gf_get_entry',
   'gf_create_entry',
   'gf_update_entry',
   'gf_delete_entry',
-  
+
   // Form Submissions (2)
   'gf_submit_form_data',
   'gf_validate_submission',
-  
+
   // Notifications (1)
   'gf_send_notifications',
-  
+
   // Add-on Feeds (7)
   'gf_list_feeds',
   'gf_get_feed',
@@ -39,7 +39,7 @@ const EXPECTED_TOOLS = [
   'gf_update_feed',
   'gf_patch_feed',
   'gf_delete_feed',
-  
+
   // Utilities (2)
   'gf_get_field_filters',
   'gf_get_results'
@@ -61,21 +61,21 @@ const TOOL_CATEGORIES = {
 
 suite.test('Tool Registration: Should have exactly 23 tools registered', () => {
   TestAssert.equal(EXPECTED_TOOLS.length, 23, 'Should have 23 tools defined');
-  
+
   // Count by category
   let totalTools = 0;
   Object.values(TOOL_CATEGORIES).forEach(tools => {
     totalTools += tools.length;
   });
-  
+
   TestAssert.equal(totalTools, 23, 'Category tools should sum to 23');
 });
 
 suite.test('Tool Registration: Should have all expected tool names', () => {
   const toolSet = new Set(EXPECTED_TOOLS);
-  
+
   TestAssert.equal(toolSet.size, 23, 'Should have 23 unique tool names');
-  
+
   // Verify naming convention
   EXPECTED_TOOLS.forEach(tool => {
     TestAssert.isTrue(tool.startsWith('gf_'), `Tool ${tool} should start with gf_`);
@@ -104,10 +104,10 @@ suite.test('Schema Validation: Forms tools should have proper schemas', () => {
       include: { type: 'array', items: { type: 'number' } }
     }
   };
-  
+
   TestAssert.equal(listFormsSchema.type, 'object');
   TestAssert.isNotNull(listFormsSchema.properties);
-  
+
   // Validate get_form schema
   const getFormSchema = {
     type: 'object',
@@ -116,9 +116,9 @@ suite.test('Schema Validation: Forms tools should have proper schemas', () => {
     },
     required: ['id']
   };
-  
+
   TestAssert.includes(getFormSchema.required, 'id');
-  
+
   // Validate create_form schema
   const createFormSchema = {
     type: 'object',
@@ -129,7 +129,7 @@ suite.test('Schema Validation: Forms tools should have proper schemas', () => {
     },
     required: ['title']
   };
-  
+
   TestAssert.includes(createFormSchema.required, 'title');
 });
 
@@ -154,7 +154,7 @@ suite.test('Schema Validation: Entries tools should have search schema', () => {
       }
     }
   };
-  
+
   TestAssert.equal(searchProperties.search.type, 'object');
   TestAssert.lengthOf(searchProperties.search.properties.field_filters.items.properties.operator.enum, 14);
 });
@@ -169,7 +169,7 @@ suite.test('Schema Validation: Feeds tools should have addon_slug validation', (
     },
     required: ['addon_slug', 'form_id', 'meta']
   };
-  
+
   TestAssert.includes(feedSchema.required, 'addon_slug');
   TestAssert.includes(feedSchema.required, 'form_id');
   TestAssert.includes(feedSchema.required, 'meta');
@@ -182,13 +182,13 @@ suite.test('Schema Validation: Feeds tools should have addon_slug validation', (
 suite.test('Handler Validation: All tools should have handlers', () => {
   // Simulate handler mapping
   const handlers = {};
-  
+
   EXPECTED_TOOLS.forEach(tool => {
     handlers[tool] = true; // Would be actual handler function
   });
-  
+
   TestAssert.equal(Object.keys(handlers).length, 23, 'Should have 23 handlers');
-  
+
   EXPECTED_TOOLS.forEach(tool => {
     TestAssert.isTrue(handlers[tool], `Should have handler for ${tool}`);
   });
@@ -196,11 +196,11 @@ suite.test('Handler Validation: All tools should have handlers', () => {
 
 suite.test('Handler Validation: Delete operations should check permissions', () => {
   const deleteTools = ['gf_delete_form', 'gf_delete_entry', 'gf_delete_feed'];
-  
+
   deleteTools.forEach(tool => {
     TestAssert.includes(EXPECTED_TOOLS, tool, `${tool} should be registered`);
   });
-  
+
   // These tools should have delete protection logic
   TestAssert.lengthOf(deleteTools, 3, 'Should have 3 delete tools');
 });
@@ -222,11 +222,11 @@ suite.test('Parameter Validation: ID parameters should be numbers', () => {
     'gf_patch_feed',
     'gf_delete_feed'
   ];
-  
+
   toolsWithId.forEach(tool => {
     TestAssert.includes(EXPECTED_TOOLS, tool, `${tool} should be registered`);
   });
-  
+
   TestAssert.lengthOf(toolsWithId, 10, 'Should have 10 tools with ID parameter');
 });
 
@@ -240,7 +240,7 @@ suite.test('Parameter Validation: form_id should be required where needed', () =
     'gf_get_field_filters',
     'gf_get_results'
   ];
-  
+
   toolsWithFormId.forEach(tool => {
     TestAssert.includes(EXPECTED_TOOLS, tool, `${tool} should be registered`);
   });
@@ -249,11 +249,11 @@ suite.test('Parameter Validation: form_id should be required where needed', () =
 suite.test('Parameter Validation: Pagination parameters should be consistent', () => {
   // Only entries endpoint supports pagination, forms endpoint does not
   const toolsWithPagination = ['gf_list_entries'];
-  
+
   toolsWithPagination.forEach(tool => {
     TestAssert.includes(EXPECTED_TOOLS, tool, `${tool} should support pagination`);
   });
-  
+
   // Verify forms endpoint does NOT have pagination (returns all forms as object)
   TestAssert.includes(EXPECTED_TOOLS, 'gf_list_forms', 'gf_list_forms should exist but not support pagination');
 });
@@ -284,7 +284,7 @@ suite.test('Error Handling: All tools should handle missing required params', ()
     'gf_get_field_filters': ['form_id'],
     'gf_get_results': ['form_id']
   };
-  
+
   Object.keys(toolsWithRequired).forEach(tool => {
     TestAssert.includes(EXPECTED_TOOLS, tool, `${tool} should be registered`);
     TestAssert.isTrue(toolsWithRequired[tool].length > 0, `${tool} should have required params`);
@@ -298,7 +298,7 @@ suite.test('Error Handling: Tools should wrap errors consistently', () => {
     details: 'Detailed error information',
     success: false
   };
-  
+
   TestAssert.isFalse(errorResponse.success);
   TestAssert.isNotNull(errorResponse.error);
   TestAssert.isNotNull(errorResponse.details);
@@ -319,12 +319,12 @@ suite.test('Coverage: Should cover all REST API v2 endpoints', () => {
     '/forms/{id}/field-filters': ['get'],
     '/forms/{id}/results': ['get']
   };
-  
+
   let totalOperations = 0;
   Object.values(apiEndpoints).forEach(ops => {
     totalOperations += ops.length;
   });
-  
+
   // We have 24 tools covering all operations
   TestAssert.isTrue(totalOperations >= 20, 'Should cover at least 20 operations');
 });
@@ -335,7 +335,7 @@ suite.test('Coverage: Should have complete CRUD operations where applicable', ()
     entries: ['list', 'get', 'create', 'update', 'delete'],
     feeds: ['list', 'get', 'create', 'update', 'patch', 'delete']
   };
-  
+
   TestAssert.lengthOf(crudEntities.forms, 5);
   TestAssert.lengthOf(crudEntities.entries, 5);
   TestAssert.lengthOf(crudEntities.feeds, 6); // Includes patch
@@ -354,11 +354,11 @@ suite.test('Descriptions: All tools should have clear descriptions', () => {
     'gf_delete_form': 'Delete or trash a form (requires ALLOW_DELETE=true)',
     'gf_validate_form': 'Validate form submission data'
   };
-  
+
   Object.keys(toolDescriptions).forEach(tool => {
     TestAssert.isTrue(toolDescriptions[tool].length > 10, `${tool} should have meaningful description`);
   });
-  
+
   // Verify list_forms description clarifies the object response format
   TestAssert.includes(
     toolDescriptions['gf_list_forms'],
@@ -373,7 +373,7 @@ suite.test('Descriptions: Delete tools should mention permission requirement', (
     'gf_delete_entry': 'Delete or trash an entry (requires ALLOW_DELETE=true)',
     'gf_delete_feed': 'Delete an add-on feed'
   };
-  
+
   TestAssert.includes(deleteDescriptions['gf_delete_form'], 'ALLOW_DELETE');
   TestAssert.includes(deleteDescriptions['gf_delete_entry'], 'ALLOW_DELETE');
 });

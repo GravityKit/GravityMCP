@@ -1,11 +1,8 @@
 # Gravity MCP
 
-A Model Context Protocol (MCP) server for Gravity Forms. Interact with your WordPress forms, entries, and submissions through Claude Desktop or any MCP-compatible client.
+A Model Context Protocol (MCP) server for Gravity Forms. Interact with your WordPress forms, entries, and submissions through any MCP-compatible client.
 
 [![npm version](https://img.shields.io/npm/v/@gravitykit/gravity-mcp.svg)](https://www.npmjs.com/package/@gravitykit/gravity-mcp)
-[![License: GPL-2.0](https://img.shields.io/badge/License-GPL-2.0-blue.svg)](https://opensource.org/licenses/GPL-2.0)
-[![Node.js Version](https://img.shields.io/node/v/@gravitykit/gravity-mcp.svg)](https://nodejs.org)
-[![MCP Protocol](https://img.shields.io/badge/MCP-1.0.0-blue)](https://modelcontextprotocol.io)
 
 Built by [GravityKit](https://www.gravitykit.com) for the Gravity Forms and WordPress communities.
 

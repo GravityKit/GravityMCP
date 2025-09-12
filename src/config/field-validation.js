@@ -1,14 +1,14 @@
 /**
- * Field-Aware Validation Module for Gravity Forms MCP Server
- * 
+ * Field-Aware Validation Module for Gravity MCP
+ *
  * Provides comprehensive field-specific validation using
  * the local field registry to ensure 100% valid structure
  * for forms, entries, and JSON data.
  */
 
-import { 
-  getFieldDefinition, 
-  isCompoundField, 
+import {
+  getFieldDefinition,
+  isCompoundField,
   isArrayField,
   fieldStoresData,
   getStorageFormat,
@@ -36,7 +36,7 @@ export class FieldAwareValidator {
     for (let i = 0; i < fields.length; i++) {
       const field = fields[i];
       const validation = this.validateField(field, `fields[${i}]`);
-      
+
       if (validation.isValid) {
         validated.push(validation.field);
       } else {
@@ -77,17 +77,17 @@ export class FieldAwareValidator {
 
     // Get field definition from registry
     const definition = getFieldDefinition(field.type);
-    
+
     if (!definition) {
       // Check if we're in a test environment
       const isTest = process.env.NODE_ENV === 'test' || process.argv.some(arg => arg.includes('test'));
-      
+
       if (isTest) {
         console.log(`✅ Handling unknown field type '${field.type}' gracefully`);
       } else {
         console.warn(`[FieldValidator] Unknown field type '${field.type}' at ${path}`);
       }
-      
+
       // Allow unknown types but mark them
       return {
         isValid: true,
@@ -248,7 +248,7 @@ export class FieldAwareValidator {
     // Validate each field value
     for (const field of form.fields) {
       const definition = getFieldDefinition(field.type);
-      
+
       if (!definition) {
         continue; // Skip unknown field types
       }
@@ -452,14 +452,14 @@ export class FieldAwareValidator {
     // Process each field
     for (const field of form.fields) {
       const definition = getFieldDefinition(field.type);
-      
+
       if (!definition || !fieldStoresData(field.type)) {
         continue; // Skip fields that don't store data
       }
 
       // Extract submission value
       const inputValue = this.extractSubmissionValue(submissionData, field, definition);
-      
+
       if (inputValue === null || inputValue === undefined) {
         continue; // Skip empty values
       }
@@ -502,7 +502,7 @@ export class FieldAwareValidator {
     if (isCompoundField(field.type)) {
       const subInputs = getCompoundFieldInputs(field.type);
       const value = {};
-      
+
       if (subInputs) {
         for (const [subId, subName] of Object.entries(subInputs)) {
           const inputKey = `input_${field.id}_${subId}`;
@@ -511,7 +511,7 @@ export class FieldAwareValidator {
           }
         }
       }
-      
+
       return Object.keys(value).length > 0 ? value : null;
     }
 
@@ -519,12 +519,12 @@ export class FieldAwareValidator {
     if (isArrayField(field.type)) {
       const values = [];
       let index = 1;
-      
+
       while (submissionData[`input_${field.id}_${index}`] !== undefined) {
         values.push(submissionData[`input_${field.id}_${index}`]);
         index++;
       }
-      
+
       return values.length > 0 ? values : submissionData[`input_${field.id}`];
     }
 
@@ -578,9 +578,9 @@ export class FieldAwareValidator {
 
     for (const field of form.fields) {
       summary.totalFields++;
-      
+
       const definition = getFieldDefinition(field.type);
-      
+
       if (!definition) {
         summary.unknownTypes.push(field.type);
         continue;

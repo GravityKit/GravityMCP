@@ -1,6 +1,6 @@
 /**
  * Field Operations Module - Main exports
- * Provides intelligent field management for Gravity Forms MCP Server
+ * Provides intelligent field management for Gravity MCP
  */
 
 // Import core components for internal use
@@ -24,15 +24,15 @@ export function createFieldOperations(apiClient, fieldRegistry, validator) {
   const dependencyTracker = new DependencyTracker();
   const positionEngine = new PositionEngine();
   const fieldManager = new FieldManager(apiClient, fieldRegistry, validator);
-  
+
   // Inject dependencies
   fieldManager.dependencyTracker = dependencyTracker;
   fieldManager.positionEngine = positionEngine;
-  
+
   // Create test form manager if in test mode
-  const testFormManager = testConfig.isTestMode() ? 
+  const testFormManager = testConfig.isTestMode() ?
     new TestFormManager(apiClient, testConfig) : null;
-  
+
   return {
     fieldManager,
     dependencyTracker,
@@ -51,7 +51,7 @@ export const fieldOperationHandlers = {
    */
   async gf_add_field(params, { fieldManager }) {
     const { form_id, field_type, properties = {}, position = {}, test_mode = false } = params;
-    
+
     try {
       const result = await fieldManager.addField(
         form_id,
@@ -59,7 +59,7 @@ export const fieldOperationHandlers = {
         properties,
         position
       );
-      
+
       return {
         success: true,
         ...result
@@ -73,20 +73,20 @@ export const fieldOperationHandlers = {
       };
     }
   },
-  
+
   /**
    * Update field properties
    */
   async gf_update_field(params, { fieldManager }) {
     const { form_id, field_id, properties, force = false, test_mode = false } = params;
-    
+
     try {
       const result = await fieldManager.updateField(
         form_id,
         field_id,
         properties
       );
-      
+
       // Check for breaking changes if not forced
       if (!force && result.warnings?.dependencies?.length > 0) {
         return {
@@ -96,7 +96,7 @@ export const fieldOperationHandlers = {
           suggestion: 'Use force=true to update anyway'
         };
       }
-      
+
       return {
         success: true,
         ...result
@@ -110,20 +110,20 @@ export const fieldOperationHandlers = {
       };
     }
   },
-  
+
   /**
    * Delete field with dependency checking
    */
   async gf_delete_field(params, { fieldManager }) {
     const { form_id, field_id, cascade = false, force = false, test_mode = false } = params;
-    
+
     try {
       const result = await fieldManager.deleteField(
         form_id,
         field_id,
         { cascade, force }
       );
-      
+
       return result;
     } catch (error) {
       return {
@@ -134,13 +134,13 @@ export const fieldOperationHandlers = {
       };
     }
   },
-  
+
   /**
    * List available field types
    */
   async gf_list_field_types(params, { fieldRegistry }) {
     const { category, feature, search, include_variants = false } = params;
-    
+
     try {
       const allTypes = Object.entries(fieldRegistry).map(([type, def]) => ({
         type,
@@ -158,7 +158,7 @@ export const fieldOperationHandlers = {
           validation: def.supportsValidation || false,
           css_class: def.supportsCssClass || false
         },
-        variants: include_variants && def.variants ? 
+        variants: include_variants && def.variants ?
           Object.entries(def.variants).map(([name, variant]) => ({
             name,
             label: variant.label,
@@ -168,30 +168,30 @@ export const fieldOperationHandlers = {
         storage: def.storage,
         validation: def.validation
       }));
-      
+
       // Apply filters
       let filteredTypes = allTypes;
-      
+
       if (category) {
         filteredTypes = filteredTypes.filter(t => t.category === category);
       }
-      
+
       if (feature) {
         filteredTypes = filteredTypes.filter(t => t.supports[feature] === true);
       }
-      
+
       if (search) {
         const searchLower = search.toLowerCase();
-        filteredTypes = filteredTypes.filter(t => 
+        filteredTypes = filteredTypes.filter(t =>
           t.type.toLowerCase().includes(searchLower) ||
           t.label.toLowerCase().includes(searchLower) ||
           (t.description && t.description.toLowerCase().includes(searchLower))
         );
       }
-      
+
       // Get unique categories
       const categories = [...new Set(allTypes.map(t => t.category))].filter(Boolean);
-      
+
       return {
         success: true,
         field_types: filteredTypes,
@@ -238,10 +238,10 @@ export const fieldOperationTools = [
             placeholder: { type: 'string', description: 'Placeholder text' },
             defaultValue: { type: 'string', description: 'Default value' },
             cssClass: { type: 'string', description: 'CSS class names' },
-            size: { 
-              type: 'string', 
+            size: {
+              type: 'string',
               enum: ['small', 'medium', 'large'],
-              description: 'Field size' 
+              description: 'Field size'
             },
             visibility: {
               type: 'string',

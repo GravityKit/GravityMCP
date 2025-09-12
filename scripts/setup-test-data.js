@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Test Data Setup Script for Gravity Forms MCP Server
+ * Test Data Setup Script for Gravity MCP
  * Creates test forms, entries, and feeds for testing and development
  */
 
@@ -11,7 +11,7 @@ import GravityFormsClient from '../src/gravity-forms-client.js';
 // Load environment variables
 dotenv.config();
 
-console.log('🔧 Gravity Forms MCP Server - Test Data Setup');
+console.log('🔧 Gravity MCP - Test Data Setup');
 console.log('='.repeat(50));
 
 // Parse command line arguments
@@ -21,7 +21,7 @@ const forceProduction = args.includes('--force-production');
 // Safety check: Require test credentials unless explicitly forcing production
 if (!forceProduction) {
   // Check for test environment credentials
-  const hasTestCredentials = process.env.GRAVITY_FORMS_TEST_BASE_URL && 
+  const hasTestCredentials = process.env.GRAVITY_FORMS_TEST_BASE_URL &&
                             process.env.GRAVITY_FORMS_TEST_CONSUMER_KEY &&
                             process.env.GRAVITY_FORMS_TEST_CONSUMER_SECRET;
 
@@ -50,7 +50,7 @@ if (!forceProduction) {
     GRAVITY_FORMS_AUTH_METHOD: process.env.GRAVITY_FORMS_AUTH_METHOD || 'basic',
     GRAVITY_FORMS_ALLOW_DELETE: 'true'
   };
-  
+
   console.log('✅ Using TEST environment (safe mode)\n');
 } else {
   // Force production mode - show scary warnings
@@ -61,10 +61,10 @@ if (!forceProduction) {
   console.log('  - Contamination of production analytics');
   console.log('  - Unwanted notifications to real users');
   console.log('  - Compliance and data governance issues\n');
-  
+
   // Still require production credentials
-  if (!process.env.GRAVITY_FORMS_CONSUMER_KEY || 
-      !process.env.GRAVITY_FORMS_CONSUMER_SECRET || 
+  if (!process.env.GRAVITY_FORMS_CONSUMER_KEY ||
+      !process.env.GRAVITY_FORMS_CONSUMER_SECRET ||
       !process.env.GRAVITY_FORMS_BASE_URL) {
     console.error('❌ Missing production credentials!');
     console.error('Even with --force-production, you need to configure:');
@@ -73,7 +73,7 @@ if (!forceProduction) {
     console.error('  - GRAVITY_FORMS_BASE_URL');
     process.exit(1);
   }
-  
+
   var config = {
     GRAVITY_FORMS_CONSUMER_KEY: process.env.GRAVITY_FORMS_CONSUMER_KEY,
     GRAVITY_FORMS_CONSUMER_SECRET: process.env.GRAVITY_FORMS_CONSUMER_SECRET,
@@ -81,7 +81,7 @@ if (!forceProduction) {
     GRAVITY_FORMS_AUTH_METHOD: process.env.GRAVITY_FORMS_AUTH_METHOD || 'basic',
     GRAVITY_FORMS_ALLOW_DELETE: 'true'
   };
-  
+
   console.log('🚨 Using PRODUCTION environment (dangerous mode)\n');
 }
 
@@ -298,10 +298,10 @@ async function setupTestData() {
     console.log('🔌 Testing connection...');
     await client.initialize();
     console.log('✅ Connected successfully!\n');
-    
+
     // Create test forms
     console.log('📝 Creating test forms...');
-    
+
     for (const formData of testForms) {
       try {
         const result = await client.createForm(formData);
@@ -310,11 +310,11 @@ async function setupTestData() {
           title: result.form.title
         });
         console.log(`  ✅ Created: ${result.form.title} (ID: ${result.form.id})`);
-        
+
         // Create sample entries for the first form
         if (created.forms.length === 1) {
           console.log('  📊 Adding sample entries...');
-          
+
           for (const entryData of sampleEntries) {
             const entryResult = await client.createEntry({
               form_id: result.form.id,
@@ -331,11 +331,11 @@ async function setupTestData() {
         console.error(`  ❌ Failed to create form: ${error.message}`);
       }
     }
-    
+
     // Try to create a feed if MailChimp is available
     if (created.forms.length > 0) {
       console.log('\n🔗 Attempting to create test feed...');
-      
+
       try {
         const feedResult = await client.createFeed({
           addon_slug: 'gravityformsmailchimp',
@@ -348,7 +348,7 @@ async function setupTestData() {
             mappedFields_FNAME: '1'
           }
         });
-        
+
         created.feeds.push({
           id: feedResult.feed.id,
           addon: 'gravityformsmailchimp',
@@ -359,7 +359,7 @@ async function setupTestData() {
         console.log('  ℹ️  Feed creation skipped (addon may not be installed)');
       }
     }
-    
+
     // Print summary
     console.log('\n' + '='.repeat(50));
     console.log('✅ Test Data Setup Complete!\n');
@@ -367,62 +367,62 @@ async function setupTestData() {
     console.log(`  - Forms created: ${created.forms.length}`);
     console.log(`  - Entries created: ${created.entries.length}`);
     console.log(`  - Feeds created: ${created.feeds.length}`);
-    
+
     if (created.forms.length > 0) {
       console.log('\n📋 Created Forms:');
       created.forms.forEach(form => {
         console.log(`  - ${form.title} (ID: ${form.id})`);
       });
     }
-    
+
     console.log('\n💡 Tips:');
     console.log('  - Run "npm test" to test with this data');
     console.log('  - Run "npm run inspect" to use with MCP inspector');
     console.log('  - Use the form IDs above in your testing');
-    
+
     // Ask about cleanup
     console.log('\n🗑️  Cleanup Option:');
     console.log('  To remove test data, run this script with --cleanup');
-    
+
   } catch (error) {
     console.error('\n❌ Setup failed:', error.message);
-    
+
     if (error.response) {
       console.error('  Status:', error.response.status);
       console.error('  Details:', error.response.data);
     }
-    
+
     process.exit(1);
   }
 }
 
 async function cleanupTestData() {
   console.log('🧹 Cleaning up test data...\n');
-  
+
   try {
     // List all forms
     const formsResult = await client.listForms();
-    const testForms = formsResult.forms.filter(f => 
+    const testForms = formsResult.forms.filter(f =>
       f.title.includes('(Test)') || f.title.includes('test')
     );
-    
+
     if (testForms.length === 0) {
       console.log('ℹ️  No test forms found to clean up');
       return;
     }
-    
+
     console.log(`Found ${testForms.length} test forms to clean up:\n`);
-    
+
     for (const form of testForms) {
       console.log(`Deleting: ${form.title} (ID: ${form.id})`);
-      
+
       // Delete entries first
       try {
         const entriesResult = await client.listEntries({ form_id: form.id });
-        
+
         if (entriesResult.entries.length > 0) {
           console.log(`  Deleting ${entriesResult.entries.length} entries...`);
-          
+
           for (const entry of entriesResult.entries) {
             await client.deleteEntry({ id: entry.id, force: true });
           }
@@ -430,14 +430,14 @@ async function cleanupTestData() {
       } catch (error) {
         console.log(`  ⚠️  Could not delete entries: ${error.message}`);
       }
-      
+
       // Delete feeds
       try {
         const feedsResult = await client.listFormFeeds({ form_id: form.id });
-        
+
         if (feedsResult.feeds && feedsResult.feeds.length > 0) {
           console.log(`  Deleting ${feedsResult.feeds.length} feeds...`);
-          
+
           for (const feed of feedsResult.feeds) {
             await client.deleteFeed({ id: feed.id });
           }
@@ -445,7 +445,7 @@ async function cleanupTestData() {
       } catch (error) {
         // Feeds might not be available
       }
-      
+
       // Delete form
       try {
         await client.deleteForm({ id: form.id, force: true });
@@ -454,9 +454,9 @@ async function cleanupTestData() {
         console.error(`  ❌ Could not delete form: ${error.message}\n`);
       }
     }
-    
+
     console.log('✅ Cleanup complete!');
-    
+
   } catch (error) {
     console.error('❌ Cleanup failed:', error.message);
     process.exit(1);

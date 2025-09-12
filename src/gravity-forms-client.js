@@ -14,13 +14,13 @@ export class GravityFormsClient {
     this.config = config;
     this.authManager = new AuthManager(config);
     this.baseURL = `${config.GRAVITY_FORMS_BASE_URL}/wp-json/gf/v2`;
-    
+
     // Initialize HTTP client with Basic Auth as primary method
     this.httpClient = axios.create({
       baseURL: this.baseURL,
       timeout: parseInt(config.GRAVITY_FORMS_TIMEOUT) || 30000,
       headers: {
-        'User-Agent': 'Gravity Forms MCP Server v1.0.0',
+        'User-Agent': 'Gravity MCP v1.0.0',
         'Accept': 'application/json'
       }
     });
@@ -34,7 +34,7 @@ export class GravityFormsClient {
           `${this.baseURL}${requestConfig.url}`,
           requestConfig.params
         );
-        
+
         // Merge auth headers
         requestConfig.headers = {
           ...requestConfig.headers,
@@ -63,7 +63,7 @@ export class GravityFormsClient {
         if (this.config.GRAVITY_FORMS_DEBUG === 'true') {
           console.error(`❌ ${error.response?.status || 'Network Error'} ${error.config?.url}`);
         }
-        
+
         // Enhanced error handling
         return this.handleApiError(error);
       }
@@ -78,19 +78,19 @@ export class GravityFormsClient {
    */
   async initialize() {
     // During testing, don't output to stderr to avoid red terminal output
-    const isTest = process.env.NODE_ENV === 'test' || 
+    const isTest = process.env.NODE_ENV === 'test' ||
                   process.env.GRAVITY_FORMS_TEST_MODE === 'true' ||
                   process.argv.some(arg => arg.includes('test'));
-    
+
     // Only output initialization messages when not in test mode
     if (!isTest) {
-      console.log('🚀 Initializing Gravity Forms MCP Server');
+      console.log('🚀 Initializing Gravity MCP');
       console.log(`📡 Connecting to: ${this.config.GRAVITY_FORMS_BASE_URL}`);
     }
-    
+
     // Validate REST API access
     const validation = await validateRestApiAccess(this.httpClient, this.authManager);
-    
+
     if (!validation.available) {
       throw new Error(`Gravity Forms REST API not accessible: ${validation.error}`);
     }
@@ -101,7 +101,7 @@ export class GravityFormsClient {
       console.log(`🛡️ Security: ${authInfo.secure ? 'HTTPS ✅' : 'HTTP ⚠️'}`);
       console.log(`🔧 API Access: ${validation.message}`);
       console.log(`🗑️ Delete Operations: ${this.allowDelete ? 'ENABLED ⚠️' : 'DISABLED ✅'}`);
-      
+
       if (!validation.fullAccess) {
         console.warn(`⚠️ Limited API access: ${validation.coverage}`);
       }
@@ -154,7 +154,7 @@ export class GravityFormsClient {
     try {
       // Validate input parameters
       const validatedInput = ValidationFactory.validateToolInput(toolName, input);
-      
+
       // Execute API call with validated input
       return await apiCall(validatedInput);
     } catch (error) {
@@ -178,7 +178,7 @@ export class GravityFormsClient {
   async listForms(params = {}) {
     return this.validateAndCall('gf_list_forms', params, async (validated) => {
       const response = await this.httpClient.get('/forms', { params: validated });
-      
+
       return {
         forms: response.data,
         total_count: parseInt(response.headers['x-wp-total'] || '0'),
@@ -196,7 +196,7 @@ export class GravityFormsClient {
     return this.validateAndCall('gf_get_form', params, async (validated) => {
       const { id } = validated;
       const response = await this.httpClient.get(`/forms/${id}`);
-      
+
       return {
         form: response.data,
         field_count: response.data.fields?.length || 0,
@@ -212,7 +212,7 @@ export class GravityFormsClient {
   async createForm(params) {
     return this.validateAndCall('gf_create_form', params, async (validated) => {
       const response = await this.httpClient.post('/forms', validated);
-      
+
       return {
         form: response.data,
         created: true,
@@ -228,21 +228,21 @@ export class GravityFormsClient {
   async updateForm(params) {
     return this.validateAndCall('gf_update_form', params, async (validated) => {
       const { id, ...updates } = validated;
-      
+
       // First, fetch the existing form to preserve all current data
       const existingFormResponse = await this.httpClient.get(`/forms/${id}`);
       const existingForm = existingFormResponse.data;
-      
+
       // Merge the updates with the existing form data
       // This ensures we don't lose any fields that weren't included in the update
       const updatedFormData = {
         ...existingForm,
         ...updates
       };
-      
+
       // Send the complete form data
       const response = await this.httpClient.put(`/forms/${id}`, updatedFormData);
-      
+
       return {
         form: response.data,
         updated: true,
@@ -262,14 +262,14 @@ export class GravityFormsClient {
 
     return this.validateAndCall('gf_delete_form', params, async (validated) => {
       const { id, force = false } = validated;
-      
+
       const deleteParams = {};
       if (force) {
         deleteParams.force = 'true';
       }
 
       const response = await this.httpClient.delete(`/forms/${id}`, { params: deleteParams });
-      
+
       return {
         deleted: true,
         form_id: id,
@@ -285,12 +285,12 @@ export class GravityFormsClient {
   async validateForm(params) {
     return this.validateAndCall('gf_validate_form', params, async (validated) => {
       const { form_id, ...submissionData } = validated;
-      
+
       const response = await this.httpClient.post(`/forms/${form_id}/submissions`, {
         ...submissionData,
         validation_only: true
       });
-      
+
       return {
         valid: response.data.is_valid || false,
         validation_messages: response.data.validation_messages || {},
@@ -311,21 +311,21 @@ export class GravityFormsClient {
     return this.validateAndCall('gf_list_entries', params, async (validated) => {
       // Convert search parameters to Gravity Forms format
       const searchParams = { ...validated };
-      
+
       if (validated.search) {
         searchParams.search = JSON.stringify(validated.search);
       }
-      
+
       if (validated.sorting) {
         searchParams.sorting = JSON.stringify(validated.sorting);
       }
-      
+
       if (validated.paging) {
         searchParams.paging = JSON.stringify(validated.paging);
       }
 
       const response = await this.httpClient.get('/entries', { params: searchParams });
-      
+
       return {
         entries: response.data.entries || response.data,
         total_count: response.data.total_count || parseInt(response.headers['x-wp-total'] || '0'),
@@ -342,7 +342,7 @@ export class GravityFormsClient {
     return this.validateAndCall('gf_get_entry', params, async (validated) => {
       const { id } = validated;
       const response = await this.httpClient.get(`/entries/${id}`);
-      
+
       return {
         entry: response.data,
         form_id: response.data.form_id,
@@ -358,7 +358,7 @@ export class GravityFormsClient {
   async createEntry(params) {
     return this.validateAndCall('gf_create_entry', params, async (validated) => {
       const response = await this.httpClient.post('/entries', validated);
-      
+
       return {
         entry: response.data,
         created: true,
@@ -375,21 +375,21 @@ export class GravityFormsClient {
   async updateEntry(params) {
     return this.validateAndCall('gf_update_entry', params, async (validated) => {
       const { id, ...updates } = validated;
-      
+
       // First, fetch the existing entry to preserve all current field data
       const existingEntryResponse = await this.httpClient.get(`/entries/${id}`);
       const existingEntry = existingEntryResponse.data;
-      
+
       // Merge the updates with the existing entry data
       // This ensures we don't lose any field values that weren't included in the update
       const updatedEntryData = {
         ...existingEntry,
         ...updates
       };
-      
+
       // Send the complete entry data
       const response = await this.httpClient.put(`/entries/${id}`, updatedEntryData);
-      
+
       return {
         entry: response.data,
         updated: true,
@@ -409,14 +409,14 @@ export class GravityFormsClient {
 
     return this.validateAndCall('gf_delete_entry', params, async (validated) => {
       const { id, force = false } = validated;
-      
+
       const deleteParams = {};
       if (force) {
         deleteParams.force = 'true';
       }
 
       const response = await this.httpClient.delete(`/entries/${id}`, { params: deleteParams });
-      
+
       return {
         deleted: true,
         entry_id: id,
@@ -436,9 +436,9 @@ export class GravityFormsClient {
   async submitFormData(params) {
     return this.validateAndCall('gf_submit_form_data', params, async (validated) => {
       const { form_id, ...submissionData } = validated;
-      
+
       const response = await this.httpClient.post(`/forms/${form_id}/submissions`, submissionData);
-      
+
       return {
         success: response.data.is_valid || false,
         entry_id: response.data.entry_id,
@@ -460,12 +460,12 @@ export class GravityFormsClient {
   async validateSubmission(params) {
     return this.validateAndCall('gf_validate_submission', params, async (validated) => {
       const { form_id, ...submissionData } = validated;
-      
+
       const response = await this.httpClient.post(`/forms/${form_id}/submissions`, {
         ...submissionData,
         validation_only: true
       });
-      
+
       return {
         valid: response.data.is_valid || false,
         validation_messages: response.data.validation_messages || {},
@@ -486,14 +486,14 @@ export class GravityFormsClient {
   async sendNotifications(params) {
     return this.validateAndCall('gf_send_notifications', params, async (validated) => {
       const { entry_id, notification_ids } = validated;
-      
+
       const requestData = {};
       if (notification_ids) {
         requestData.notification_ids = notification_ids;
       }
 
       const response = await this.httpClient.post(`/entries/${entry_id}/notifications`, requestData);
-      
+
       return {
         sent: true,
         entry_id: entry_id,
@@ -513,7 +513,7 @@ export class GravityFormsClient {
   async listFeeds(params = {}) {
     return this.validateAndCall('gf_list_feeds', params, async (validated) => {
       const response = await this.httpClient.get('/feeds', { params: validated });
-      
+
       return {
         feeds: response.data,
         total_count: response.data.length,
@@ -529,7 +529,7 @@ export class GravityFormsClient {
     return this.validateAndCall('gf_get_feed', params, async (validated) => {
       const { id } = validated;
       const response = await this.httpClient.get(`/feeds/${id}`);
-      
+
       return {
         feed: response.data,
         addon_slug: response.data.addon_slug,
@@ -546,7 +546,7 @@ export class GravityFormsClient {
     return this.validateAndCall('gf_list_form_feeds', params, async (validated) => {
       const { form_id } = validated;
       const response = await this.httpClient.get(`/forms/${form_id}/feeds`);
-      
+
       return {
         feeds: response.data,
         form_id: form_id,
@@ -561,7 +561,7 @@ export class GravityFormsClient {
   async createFeed(params) {
     return this.validateAndCall('gf_create_feed', params, async (validated) => {
       const response = await this.httpClient.post('/feeds', validated);
-      
+
       return {
         feed: response.data,
         created: true,
@@ -578,21 +578,21 @@ export class GravityFormsClient {
   async updateFeed(params) {
     return this.validateAndCall('gf_update_feed', params, async (validated) => {
       const { id, ...updates } = validated;
-      
+
       // First, fetch the existing feed to preserve all current data
       const existingFeedResponse = await this.httpClient.get(`/feeds/${id}`);
       const existingFeed = existingFeedResponse.data;
-      
+
       // Merge the updates with the existing feed data
       // This ensures we don't lose any configuration that wasn't included in the update
       const updatedFeedData = {
         ...existingFeed,
         ...updates
       };
-      
+
       // Send the complete feed data
       const response = await this.httpClient.put(`/feeds/${id}`, updatedFeedData);
-      
+
       return {
         feed: response.data,
         updated: true,
@@ -609,7 +609,7 @@ export class GravityFormsClient {
     return this.validateAndCall('gf_patch_feed', params, async (validated) => {
       const { id, ...patchData } = validated;
       const response = await this.httpClient.patch(`/feeds/${id}`, patchData);
-      
+
       return {
         feed: response.data,
         patched: true,
@@ -631,7 +631,7 @@ export class GravityFormsClient {
     return this.validateAndCall('gf_delete_feed', params, async (validated) => {
       const { id } = validated;
       const response = await this.httpClient.delete(`/feeds/${id}`);
-      
+
       return {
         deleted: true,
         feed_id: id,
@@ -651,7 +651,7 @@ export class GravityFormsClient {
     return this.validateAndCall('gf_get_field_filters', params, async (validated) => {
       const { form_id } = validated;
       const response = await this.httpClient.get(`/forms/${form_id}/field-filters`);
-      
+
       return {
         field_filters: response.data,
         form_id: form_id,
@@ -667,7 +667,7 @@ export class GravityFormsClient {
     return this.validateAndCall('gf_get_results', params, async (validated) => {
       const { form_id, ...searchParams } = validated;
       const response = await this.httpClient.get(`/forms/${form_id}/results`, { params: searchParams });
-      
+
       return {
         results: response.data,
         form_id: form_id,

@@ -1,7 +1,7 @@
 /**
  * Gravity Forms Authentication Module
  * Supports Basic Authentication (primary) and OAuth 1.0a (secondary)
- * 
+ *
  * Basic Authentication is prioritized per Gravity Forms v2 recommendations
  * OAuth 1.0a included for advanced security requirements
  */
@@ -18,7 +18,7 @@ export class BasicAuthHandler {
     this.consumerKey = consumerKey;
     this.consumerSecret = consumerSecret;
     this.baseUrl = baseUrl;
-    
+
     // Validate HTTPS for Basic Auth security
     if (!this.baseUrl.startsWith('https://')) {
       throw new Error('Basic Authentication requires HTTPS connection for security');
@@ -32,11 +32,11 @@ export class BasicAuthHandler {
   getAuthHeaders() {
     const credentials = `${this.consumerKey}:${this.consumerSecret}`;
     const encodedCredentials = Buffer.from(credentials).toString('base64');
-    
+
     return {
       'Authorization': `Basic ${encodedCredentials}`,
       'Content-Type': 'application/json',
-      'User-Agent': 'Gravity Forms MCP Server v1.0.0'
+      'User-Agent': 'Gravity MCP v1.0.0'
     };
   }
 
@@ -50,7 +50,7 @@ export class BasicAuthHandler {
         headers: this.getAuthHeaders(),
         params: { per_page: 1 }
       });
-      
+
       return {
         success: true,
         method: 'Basic Authentication',
@@ -89,7 +89,7 @@ export class OAuth1Handler {
     if (!method || !url || !timestamp || !nonce) {
       throw new Error('Invalid OAuth parameters: method, url, timestamp, and nonce are required');
     }
-    
+
     // Combine all parameters
     const allParams = {
       ...params,
@@ -131,9 +131,9 @@ export class OAuth1Handler {
   getAuthHeaders(method = 'GET', url, params = {}) {
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const nonce = crypto.randomBytes(16).toString('hex');
-    
+
     const signature = this.generateOAuthSignature(method, url, params, timestamp, nonce);
-    
+
     const authHeader = [
       `oauth_consumer_key="${encodeURIComponent(this.consumerKey)}"`,
       `oauth_timestamp="${timestamp}"`,
@@ -146,7 +146,7 @@ export class OAuth1Handler {
     return {
       'Authorization': `OAuth ${authHeader}`,
       'Content-Type': 'application/json',
-      'User-Agent': 'Gravity Forms MCP Server v1.0.0'
+      'User-Agent': 'Gravity MCP v1.0.0'
     };
   }
 
@@ -157,12 +157,12 @@ export class OAuth1Handler {
     try {
       const fullUrl = `${this.baseUrl}/wp-json/gf/v2/forms`;
       const headers = this.getAuthHeaders('GET', fullUrl, { per_page: 1 });
-      
+
       const response = await httpClient.get('/forms', {
         headers,
         params: { per_page: 1 }
       });
-      
+
       return {
         success: true,
         method: 'OAuth 1.0a',
@@ -189,7 +189,7 @@ export class AuthManager {
   constructor(config) {
     this.config = config;
     this.authHandler = null;
-    
+
     this.validateConfig();
     this.initializeAuthHandler();
   }
@@ -200,7 +200,7 @@ export class AuthManager {
   validateConfig() {
     const required = ['GRAVITY_FORMS_CONSUMER_KEY', 'GRAVITY_FORMS_CONSUMER_SECRET', 'GRAVITY_FORMS_BASE_URL'];
     const missing = required.filter(key => !this.config[key]);
-    
+
     if (missing.length > 0) {
       throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
     }
@@ -221,10 +221,10 @@ export class AuthManager {
    */
   initializeAuthHandler() {
     const { GRAVITY_FORMS_CONSUMER_KEY, GRAVITY_FORMS_CONSUMER_SECRET, GRAVITY_FORMS_BASE_URL } = this.config;
-    
+
     // Default to Basic Authentication (RECOMMENDED for Gravity Forms v2)
     const authMethod = this.config.GRAVITY_FORMS_AUTH_METHOD || 'basic';
-    
+
     try {
       if (authMethod.toLowerCase() === 'oauth' || authMethod.toLowerCase() === 'oauth1') {
         if (this.config.GRAVITY_FORMS_DEBUG === 'true') {
@@ -249,7 +249,7 @@ export class AuthManager {
       // Fallback to OAuth if Basic Auth fails (e.g., HTTP instead of HTTPS)
       if (authMethod.toLowerCase() === 'basic' && error.message.includes('HTTPS')) {
         // Only warn if not in test mode - check multiple ways tests might be run
-        const isTest = process.env.NODE_ENV === 'test' || 
+        const isTest = process.env.NODE_ENV === 'test' ||
                       process.env.GRAVITY_FORMS_TEST_MODE === 'true' ||
                       process.argv.some(arg => arg.includes('test'));
         if (!isTest) {
@@ -326,10 +326,10 @@ export async function validateRestApiAccess(httpClient, authManager) {
         });
         results.push({ ...endpoint, available: true });
       } catch (error) {
-        results.push({ 
-          ...endpoint, 
-          available: false, 
-          error: error.response?.status || 'Unknown error' 
+        results.push({
+          ...endpoint,
+          available: false,
+          error: error.response?.status || 'Unknown error'
         });
       }
     }
@@ -343,7 +343,7 @@ export async function validateRestApiAccess(httpClient, authManager) {
       endpoints: results,
       coverage: `${availableEndpoints}/${totalEndpoints}`,
       fullAccess: availableEndpoints === totalEndpoints,
-      message: availableEndpoints === totalEndpoints 
+      message: availableEndpoints === totalEndpoints
         ? 'Full REST API access confirmed'
         : `Partial access: ${availableEndpoints}/${totalEndpoints} endpoints available`
     };

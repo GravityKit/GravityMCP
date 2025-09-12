@@ -1,5 +1,5 @@
 /**
- * Test Helpers and Utilities for Gravity Forms MCP Server
+ * Test Helpers and Utilities for Gravity MCP
  * Provides mock data, test utilities, and common test functions
  */
 
@@ -273,7 +273,7 @@ export class MockHttpClient {
    * Check if a specific request was made
    */
   hasRequest(method, path) {
-    return this.requests.some(req => 
+    return this.requests.some(req =>
       req.method === method && req.path === path
     );
   }
@@ -343,7 +343,7 @@ export class TestAssert {
   static throws(fn, expectedError, message) {
     let threw = false;
     let actualError = null;
-    
+
     try {
       fn();
     } catch (error) {
@@ -363,7 +363,7 @@ export class TestAssert {
   static async throwsAsync(fn, expectedError, message) {
     let threw = false;
     let actualError = null;
-    
+
     try {
       await fn();
     } catch (error) {
@@ -411,7 +411,7 @@ export async function wait(ms) {
  */
 export async function retry(fn, times = 3, delay = 100) {
   let lastError;
-  
+
   for (let i = 0; i < times; i++) {
     try {
       return await fn();
@@ -422,7 +422,7 @@ export async function retry(fn, times = 3, delay = 100) {
       }
     }
   }
-  
+
   throw lastError;
 }
 
@@ -487,7 +487,7 @@ export class TestRunner {
 
         // Run test
         await test.fn();
-        
+
         console.log(`✅ ${test.name}`);
         passed++;
 
@@ -515,7 +515,7 @@ export class TestRunner {
     // Print summary
     console.log('\n' + '='.repeat(50));
     console.log(`Results: ${passed} passed, ${failed} failed`);
-    
+
     if (failures.length > 0) {
       console.log('\nFailures:');
       failures.forEach(f => {

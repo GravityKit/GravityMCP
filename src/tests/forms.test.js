@@ -1,13 +1,13 @@
 /**
- * Forms Endpoint Tests for Gravity Forms MCP Server
+ * Forms Endpoint Tests for Gravity MCP
  * Tests all 6 forms management tools with happy path, edge cases, and failure modes
  */
 
 import GravityFormsClient from '../gravity-forms-client.js';
-import { 
-  TestRunner, 
-  TestAssert, 
-  MockHttpClient, 
+import {
+  TestRunner,
+  TestAssert,
+  MockHttpClient,
   MockResponse,
   setupTestEnvironment,
   generateMockForm,
@@ -24,12 +24,12 @@ let testEnv;
 suite.beforeEach(() => {
   testEnv = setupTestEnvironment();
   mockHttpClient = new MockHttpClient();
-  
+
   // Create client with mocked HTTP client
   client = new GravityFormsClient(testEnv);
   client.httpClient = mockHttpClient;
   client.allowDelete = true; // Enable delete for testing
-  
+
   // Mock successful initialization
   mockHttpClient.setMockResponse('GET', '/forms', new MockResponse({ forms: [] }));
 });
@@ -44,11 +44,11 @@ suite.test('List Forms: Should list all forms as object keyed by ID', async () =
     "1": { id: "1", title: "Form 1", entries: "10" },
     "2": { id: "2", title: "Form 2", entries: "5" }
   };
-  
+
   mockHttpClient.setMockResponse('GET', '/forms', new MockResponse(mockFormsResponse));
-  
+
   const result = await client.listForms();
-  
+
   TestAssert.equal(typeof result.forms, 'object');
   TestAssert.equal(result.forms["1"].id, "1");
   TestAssert.equal(result.forms["2"].title, "Form 2");
@@ -58,9 +58,9 @@ suite.test('List Forms: Should list all forms as object keyed by ID', async () =
 suite.test('List Forms: Should handle empty results', async () => {
   // When no forms exist, returns empty object
   mockHttpClient.setMockResponse('GET', '/forms', new MockResponse({}));
-  
+
   const result = await client.listForms();
-  
+
   TestAssert.equal(typeof result.forms, 'object');
   TestAssert.equal(Object.keys(result.forms).length, 0);
 });
@@ -71,11 +71,11 @@ suite.test('List Forms: Should support include parameter for specific forms', as
   const mockResponse = {
     "5": mockForm
   };
-  
+
   mockHttpClient.setMockResponse('GET', '/forms', new MockResponse(mockResponse));
-  
+
   const result = await client.listForms({ include: [5] });
-  
+
   TestAssert.equal(result.forms["5"].id, 5);
   TestAssert.equal(result.forms["5"].title, 'Included Form');
   TestAssert.isNotNull(result.forms["5"].fields);
@@ -87,11 +87,11 @@ suite.test('List Forms: Should support include parameter for specific forms', as
 
 suite.test('Get Form: Should get specific form by ID', async () => {
   const mockForm = generateMockForm({ id: 123 });
-  
+
   mockHttpClient.setMockResponse('GET', '/forms/123', new MockResponse(mockForm));
-  
+
   const result = await client.getForm({ id: 123 });
-  
+
   TestAssert.equal(result.form.id, 123);
   TestAssert.equal(result.form.title, mockForm.title);
   TestAssert.equal(result.field_count, 3);
@@ -100,11 +100,11 @@ suite.test('Get Form: Should get specific form by ID', async () => {
 
 suite.test('Get Form: Should handle form with no fields', async () => {
   const emptyForm = generateMockForm({ id: 1, fields: [] });
-  
+
   mockHttpClient.setMockResponse('GET', '/forms/1', new MockResponse(emptyForm));
-  
+
   const result = await client.getForm({ id: 1 });
-  
+
   TestAssert.equal(result.field_count, 0);
 });
 
@@ -114,13 +114,13 @@ suite.test('Get Form: Should handle large forms (100+ fields)', async () => {
     type: 'text',
     label: `Field ${i + 1}`
   }));
-  
+
   const largeForm = generateMockForm({ id: 1, fields });
-  
+
   mockHttpClient.setMockResponse('GET', '/forms/1', new MockResponse(largeForm));
-  
+
   const result = await client.getForm({ id: 1 });
-  
+
   TestAssert.equal(result.field_count, 150);
 });
 
@@ -129,7 +129,7 @@ suite.test('Get Form: Should handle non-existent form (404)', async () => {
     { message: 'Form not found' },
     404
   ));
-  
+
   await TestAssert.throwsAsync(
     () => client.getForm({ id: 999 }),
     'not found',
@@ -151,15 +151,15 @@ suite.test('Get Form: Should validate form ID', async () => {
 
 suite.test('Create Form: Should create new form with fields', async () => {
   const newForm = generateMockForm({ id: 5 });
-  
+
   mockHttpClient.setMockResponse('POST', '/forms', new MockResponse(newForm));
-  
+
   const result = await client.createForm({
     title: 'New Test Form',
     description: 'Test description',
     fields: newForm.fields
   });
-  
+
   TestAssert.isTrue(result.created);
   TestAssert.equal(result.form.id, 5);
   TestAssert.equal(result.message, 'Form created successfully');
@@ -202,14 +202,14 @@ suite.test('Create Form: Should create form with complex conditional logic', asy
       }
     ]
   };
-  
+
   mockHttpClient.setMockResponse('POST', '/forms', new MockResponse({
     ...complexForm,
     id: 10
   }));
-  
+
   const result = await client.createForm(complexForm);
-  
+
   TestAssert.isTrue(result.created);
   TestAssert.equal(result.form.fields[1].conditionalLogic.rules[0].fieldId, 1);
 });
@@ -223,14 +223,14 @@ suite.test('Create Form: Should handle multi-page forms', async () => {
       { id: 3, type: 'text', label: 'Page 2 Field' }
     ]
   };
-  
+
   mockHttpClient.setMockResponse('POST', '/forms', new MockResponse({
     ...multiPageForm,
     id: 20
   }));
-  
+
   const result = await client.createForm(multiPageForm);
-  
+
   TestAssert.isTrue(result.created);
   TestAssert.equal(result.form.fields.length, 3);
 });
@@ -243,14 +243,14 @@ suite.test('Create Form: Should handle unicode and special characters', async ()
       { id: 1, type: 'text', label: '名前' }
     ]
   };
-  
+
   mockHttpClient.setMockResponse('POST', '/forms', new MockResponse({
     ...unicodeForm,
     id: 30
   }));
-  
+
   const result = await client.createForm(unicodeForm);
-  
+
   TestAssert.isTrue(result.created);
   TestAssert.equal(result.form.title, unicodeForm.title);
 });
@@ -284,8 +284,8 @@ suite.test('Create Form: Should handle unknown field type gracefully', async () 
 
 suite.test('Update Form: Should update existing form', async () => {
   // First mock the GET request to fetch existing form
-  const existingForm = generateMockForm({ 
-    id: 1, 
+  const existingForm = generateMockForm({
+    id: 1,
     title: 'Original Title',
     description: 'Original Description',
     fields: [
@@ -294,25 +294,25 @@ suite.test('Update Form: Should update existing form', async () => {
     ],
     is_active: true
   });
-  
+
   mockHttpClient.setMockResponse('GET', '/forms/1', new MockResponse(existingForm));
-  
+
   // Then mock the PUT request with merged data
-  const updatedForm = generateMockForm({ 
-    id: 1, 
+  const updatedForm = generateMockForm({
+    id: 1,
     title: 'Updated Title',
     description: 'Original Description',  // Preserved
     fields: existingForm.fields,          // Preserved
     is_active: true                       // Preserved
   });
-  
+
   mockHttpClient.setMockResponse('PUT', '/forms/1', new MockResponse(updatedForm));
-  
+
   const result = await client.updateForm({
     id: 1,
     title: 'Updated Title'
   });
-  
+
   TestAssert.isTrue(result.updated);
   TestAssert.equal(result.form.title, 'Updated Title');
   TestAssert.equal(result.message, 'Form updated successfully');
@@ -358,23 +358,23 @@ suite.test('Update Form: Should preserve all form data when updating single prop
       }
     }
   };
-  
+
   mockHttpClient.setMockResponse('GET', '/forms/3', new MockResponse(existingForm));
-  
+
   // Expected merged data (all properties preserved, only is_active updated)
   const expectedMergedData = {
     ...existingForm,
     is_active: false
   };
-  
+
   mockHttpClient.setMockResponse('PUT', '/forms/3', new MockResponse(expectedMergedData));
-  
+
   // Update only the is_active property
   const result = await client.updateForm({
     id: 3,
     is_active: false
   });
-  
+
   // Verify the PUT request was made with ALL data
   const putRequest = mockHttpClient.getRequests().find(r => r.method === 'PUT');
   TestAssert.exists(putRequest, 'PUT request should be made');
@@ -385,7 +385,7 @@ suite.test('Update Form: Should preserve all form data when updating single prop
   TestAssert.exists(putRequest.config.data.notifications, 'Notifications should be preserved');
   TestAssert.exists(putRequest.config.data.confirmations, 'Confirmations should be preserved');
   TestAssert.equal(putRequest.config.data.is_active, false, 'is_active should be updated');
-  
+
   TestAssert.isTrue(result.updated);
   TestAssert.equal(result.form.is_active, false, 'Updated property changed');
 });
@@ -403,7 +403,7 @@ suite.test('Update Form: Should handle permission errors (403)', async () => {
     { message: 'Insufficient permissions' },
     403
   ));
-  
+
   await TestAssert.throwsAsync(
     () => client.updateForm({ id: 1, title: 'Test' }),
     'forbidden',
@@ -417,9 +417,9 @@ suite.test('Update Form: Should handle permission errors (403)', async () => {
 
 suite.test('Delete Form: Should trash form by default', async () => {
   mockHttpClient.setMockResponse('DELETE', '/forms/1', new MockResponse({}));
-  
+
   const result = await client.deleteForm({ id: 1 });
-  
+
   TestAssert.isTrue(result.deleted);
   TestAssert.isFalse(result.permanently);
   TestAssert.equal(result.message, 'Form moved to trash');
@@ -427,9 +427,9 @@ suite.test('Delete Form: Should trash form by default', async () => {
 
 suite.test('Delete Form: Should permanently delete with force=true', async () => {
   mockHttpClient.setMockResponse('DELETE', '/forms/1', new MockResponse({}));
-  
+
   const result = await client.deleteForm({ id: 1, force: true });
-  
+
   TestAssert.isTrue(result.deleted);
   TestAssert.isTrue(result.permanently);
   TestAssert.equal(result.message, 'Form permanently deleted');
@@ -437,7 +437,7 @@ suite.test('Delete Form: Should permanently delete with force=true', async () =>
 
 suite.test('Delete Form: Should require ALLOW_DELETE=true', async () => {
   client.allowDelete = false;
-  
+
   await TestAssert.throwsAsync(
     () => client.deleteForm({ id: 1 }),
     'Delete operations are disabled',
@@ -462,13 +462,13 @@ suite.test('Validate Form: Should validate form submission data', async () => {
     is_valid: true,
     validation_messages: {}
   }));
-  
+
   const result = await client.validateForm({
     form_id: 1,
     input_1: 'John Doe',
     input_2: 'john@example.com'
   });
-  
+
   TestAssert.isTrue(result.valid);
   TestAssert.equal(result.message, 'Form data is valid');
 });
@@ -481,12 +481,12 @@ suite.test('Validate Form: Should return validation errors', async () => {
       '3': 'Message must be at least 10 characters'
     }
   }));
-  
+
   const result = await client.validateForm({
     form_id: 1,
     input_1: 'John'
   });
-  
+
   TestAssert.isFalse(result.valid);
   TestAssert.equal(result.validation_messages['2'], 'Email is required');
   TestAssert.equal(result.message, 'Validation errors found');
@@ -528,11 +528,11 @@ suite.test('Edge Case: Should handle forms with all field types', async () => {
       { id: 18, type: 'fileupload', label: 'File Upload' }
     ]
   });
-  
+
   mockHttpClient.setMockResponse('GET', '/forms/1', new MockResponse(allFieldsForm));
-  
+
   const result = await client.getForm({ id: 1 });
-  
+
   TestAssert.equal(result.field_count, 18);
   TestAssert.equal(result.form.fields[17].type, 'fileupload');
 });
@@ -542,7 +542,7 @@ suite.test('Failure Mode: Should handle rate limiting', async () => {
     { message: 'Rate limit exceeded' },
     429
   ));
-  
+
   await TestAssert.throwsAsync(
     () => client.listForms(),
     'Rate limit',
@@ -555,7 +555,7 @@ suite.test('Failure Mode: Should handle server errors', async () => {
     { message: 'Internal server error' },
     500
   ));
-  
+
   await TestAssert.throwsAsync(
     () => client.getForm({ id: 1 }),
     'Server error',
