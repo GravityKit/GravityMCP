@@ -1,10 +1,10 @@
 # GravityMCP
 
-A Model Context Protocol (MCP) server for Gravity Forms. Interact with your WordPress forms, entries, and submissions through any MCP-compatible client.
+A Model Context Protocol (MCP) server for Gravity Forms. Interact with your WordPress forms, feeds, and entries through any MCP-compatible client.
 
 [![npm version](https://img.shields.io/npm/v/@gravitykit/gravitymcp.svg)](https://www.npmjs.com/package/@gravitykit/gravitymcp)
 
-Built by [GravityKit](https://www.gravitykit.com) for the Gravity Forms and WordPress communities.
+Built by [GravityKit](https://www.gravitykit.com) for the Gravity Forms community.
 
 ## Features
 
@@ -55,9 +55,9 @@ Built by [GravityKit](https://www.gravitykit.com) for the Gravity Forms and Word
    ```json
    {
      "mcpServers": {
-       "gravity": {
+       "gravitymcp": {
          "command": "node",
-         "args": ["/path/to/gravity-mcp/src/index.js"],
+         "args": ["/path/to/GravityMCP/src/index.js"],
          "env": {
            "GRAVITY_FORMS_CONSUMER_KEY": "your_key",
            "GRAVITY_FORMS_CONSUMER_SECRET": "your_secret",
@@ -274,7 +274,7 @@ GRAVITY_FORMS_DEBUG=true
 
 ## Support
 
-- [GitHub Issues](https://github.com/GravityKit/gravity-mcp/issues)
+- [GitHub Issues](https://github.com/GravityKit/GravityMCP/issues)
 - [Gravity Forms Documentation](https://docs.gravityforms.com/rest-api-v2/)
 - [MCP Documentation](https://modelcontextprotocol.io/)
 
@@ -307,7 +307,7 @@ We welcome contributions from the Gravity Forms community! Whether you're buildi
 - Enhance error messages and debugging
 
 **For Everyone:**
-- Report bugs or suggest features via [GitHub Issues](https://github.com/GravityKit/gravity-mcp/issues)
+- Report bugs or suggest features via [GitHub Issues](https://github.com/GravityKit/GravityMCP/issues)
 - Improve documentation and examples
 - Share your use cases and workflows
 

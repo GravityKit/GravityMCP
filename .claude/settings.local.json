@@ -6,7 +6,9 @@
       "Bash(chmod:*)",
       "Bash(./convert-docs.sh)",
       "Bash(./clean-markdown.sh:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

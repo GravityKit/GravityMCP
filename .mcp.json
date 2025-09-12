@@ -184,8 +184,8 @@
   "metadata": {
     "author": "GravityKit",
     "license": "MIT",
-    "repository": "https://github.com/GravityKit/gravity-mcp",
-    "documentation": "https://github.com/GravityKit/gravity-mcp#readme",
+    "repository": "https://github.com/GravityKit/GravityMCP",
+    "documentation": "https://github.com/GravityKit/GravityMCP#readme",
     "api_coverage": "100%",
     "total_tools": 24,
     "authentication_methods": ["OAuth 1.0a", "Basic Authentication"],
