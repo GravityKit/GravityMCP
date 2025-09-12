@@ -1,11 +1,11 @@
 {
   "name": "@gravitykit/gravity-mcp",
   "version": "1.0.0",
-  "description": "MCP server for Gravity Forms",
+  "description": "Full-featured MCP server for Gravity Forms",
   "main": "src/index.js",
   "type": "module",
   "bin": {
-    "gravity-mcp": "./src/index.js"
+    "gravity-mcp": "src/index.js"
   },
   "scripts": {
     "start": "node src/index.js",
@@ -86,7 +86,7 @@
       "Basic Authentication"
     ],
     "features": [
-      "Complete REST API v2 coverage",
+      "Gravity Forms REST API coverage",
       "File upload support",
       "Advanced search and filtering",
       "Batch operations",
