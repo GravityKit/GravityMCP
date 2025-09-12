@@ -68,3 +68,6 @@ tmp/
 # MCP specific
 mcp-server.log
 debug.log
+
+# Claude local settings
+.claude/settings.local.json
