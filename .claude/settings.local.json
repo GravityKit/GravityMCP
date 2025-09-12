@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/zackkatz/Downloads/2025-09-09/**)",
+      "Read(//Users/zackkatz/Downloads/**)",
+      "Bash(chmod:*)",
+      "Bash(./convert-docs.sh)",
+      "Bash(./clean-markdown.sh:*)",
+      "Bash(python3:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

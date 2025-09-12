@@ -1,0 +1,99 @@
+{
+  "name": "@gravitykit/gravity-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Gravity Forms",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "gravity-mcp": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "inspect": "npx @modelcontextprotocol/inspector node src/index.js",
+    "check-env": "node scripts/check-env.js",
+    "setup-test-data": "node scripts/setup-test-data.js",
+    "test": "node src/tests/integration.test.js",
+    "test:unit": "node src/tests/run.js",
+    "test:auth": "node src/tests/authentication.test.js",
+    "test:forms": "node src/tests/forms.test.js",
+    "test:entries": "node src/tests/entries.test.js",
+    "test:feeds": "node src/tests/feeds.test.js",
+    "test:submissions": "node src/tests/submissions.test.js",
+    "test:validation": "node src/tests/validation.test.js",
+    "test:field-validation": "node src/tests/field-validation.test.js",
+    "test:tools": "node src/tests/server-tools.test.js",
+    "test:all": "npm run test:unit && npm run test:auth && npm run test:forms && npm run test:entries && npm run test:feeds && npm run test:submissions && npm run test:validation && npm run test:field-validation && npm run test:tools && npm test",
+    "test:coverage": "echo 'Running all tests with coverage analysis' && npm run test:all"
+  },
+  "keywords": [
+    "mcp",
+    "gravity-forms",
+    "rest-api",
+    "forms",
+    "entries",
+    "wordpress",
+    "integration",
+    "automation"
+  ],
+  "author": "GravityKit",
+  "license": "GPL-2.0",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "crypto": "^1.0.1",
+    "form-data": "^4.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "src/",
+    "scripts/",
+    "docs/",
+    "LICENSE",
+    "README.md",
+    ".env.example",
+    "mcp.json",
+    "CLAUDE.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GravityKit/gravity-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GravityKit/gravity-mcp/issues"
+  },
+  "homepage": "https://github.com/GravityKit/gravity-mcp#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "mcp": {
+    "tools": {
+      "forms": 6,
+      "entries": 6,
+      "submissions": 2,
+      "notifications": 1,
+      "feeds": 7,
+      "field_filters": 1,
+      "results": 1
+    },
+    "total_tools": 24,
+    "api_coverage": "100%",
+    "authentication": [
+      "OAuth 1.0a",
+      "Basic Authentication"
+    ],
+    "features": [
+      "Complete REST API v2 coverage",
+      "File upload support",
+      "Advanced search and filtering",
+      "Batch operations",
+      "Delete operation protection",
+      "Comprehensive error handling",
+      "Integration testing",
+      "Security validation"
+    ]
+  }
+}

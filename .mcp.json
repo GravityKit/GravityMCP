@@ -1,0 +1,203 @@
+{
+  "name": "gravity-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Gravity Forms",
+  "command": "node",
+  "args": ["src/index.js"],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "capabilities": {
+    "tools": {
+      "list": true,
+      "call": true
+    }
+  },
+  "tools": [
+    {
+      "name": "gf_list_forms",
+      "description": "List all forms with optional filtering and pagination",
+      "category": "Forms Management"
+    },
+    {
+      "name": "gf_get_form",
+      "description": "Get a specific form by ID with complete schema",
+      "category": "Forms Management"
+    },
+    {
+      "name": "gf_create_form",
+      "description": "Create a new form with fields and settings",
+      "category": "Forms Management"
+    },
+    {
+      "name": "gf_update_form",
+      "description": "Update an existing form",
+      "category": "Forms Management"
+    },
+    {
+      "name": "gf_delete_form",
+      "description": "Delete or trash a form (requires ALLOW_DELETE=true)",
+      "category": "Forms Management"
+    },
+    {
+      "name": "gf_validate_form",
+      "description": "Validate form submission data",
+      "category": "Forms Management"
+    },
+    {
+      "name": "gf_list_entries",
+      "description": "Search and list entries with advanced filtering",
+      "category": "Entries Management"
+    },
+    {
+      "name": "gf_get_entry",
+      "description": "Get a specific entry by ID",
+      "category": "Entries Management"
+    },
+    {
+      "name": "gf_create_entry",
+      "description": "Create a new entry",
+      "category": "Entries Management"
+    },
+    {
+      "name": "gf_update_entry",
+      "description": "Update an existing entry",
+      "category": "Entries Management"
+    },
+    {
+      "name": "gf_delete_entry",
+      "description": "Delete or trash an entry (requires ALLOW_DELETE=true)",
+      "category": "Entries Management"
+    },
+    {
+      "name": "gf_submit_form_data",
+      "description": "Submit form data with full processing pipeline",
+      "category": "Form Submissions"
+    },
+    {
+      "name": "gf_validate_submission",
+      "description": "Validate form submission without processing",
+      "category": "Form Submissions"
+    },
+    {
+      "name": "gf_send_notifications",
+      "description": "Send notifications for an entry",
+      "category": "Notifications"
+    },
+    {
+      "name": "gf_list_feeds",
+      "description": "List all add-on feeds",
+      "category": "Add-on Feeds"
+    },
+    {
+      "name": "gf_get_feed",
+      "description": "Get a specific feed by ID",
+      "category": "Add-on Feeds"
+    },
+    {
+      "name": "gf_list_form_feeds",
+      "description": "Get all feeds for a specific form",
+      "category": "Add-on Feeds"
+    },
+    {
+      "name": "gf_create_feed",
+      "description": "Create a new add-on feed",
+      "category": "Add-on Feeds"
+    },
+    {
+      "name": "gf_update_feed",
+      "description": "Update an existing feed",
+      "category": "Add-on Feeds"
+    },
+    {
+      "name": "gf_patch_feed",
+      "description": "Partially update a feed",
+      "category": "Add-on Feeds"
+    },
+    {
+      "name": "gf_delete_feed",
+      "description": "Delete an add-on feed",
+      "category": "Add-on Feeds"
+    },
+    {
+      "name": "gf_get_field_filters",
+      "description": "Get field filters for a form",
+      "category": "Field Filters"
+    },
+    {
+      "name": "gf_get_results",
+      "description": "Get Quiz, Poll, or Survey results",
+      "category": "Results"
+    }
+  ],
+  "configuration": {
+    "required": [
+      {
+        "name": "GRAVITY_FORMS_CONSUMER_KEY",
+        "description": "Consumer Key from WordPress admin: Forms > Settings > REST API",
+        "type": "string"
+      },
+      {
+        "name": "GRAVITY_FORMS_CONSUMER_SECRET",
+        "description": "Consumer Secret from WordPress admin: Forms > Settings > REST API",
+        "type": "string"
+      },
+      {
+        "name": "GRAVITY_FORMS_BASE_URL",
+        "description": "Your WordPress site URL (no trailing slash)",
+        "type": "string"
+      }
+    ],
+    "optional": [
+      {
+        "name": "GRAVITY_FORMS_AUTH_METHOD",
+        "description": "Authentication method: 'basic' (recommended) or 'oauth'",
+        "type": "string",
+        "default": "basic"
+      },
+      {
+        "name": "GRAVITY_FORMS_ALLOW_DELETE",
+        "description": "Set to 'true' to enable DELETE operations (forms and entries)",
+        "type": "boolean",
+        "default": false
+      },
+      {
+        "name": "GRAVITY_FORMS_TIMEOUT",
+        "description": "Request timeout in milliseconds",
+        "type": "number",
+        "default": 30000
+      },
+      {
+        "name": "GRAVITY_FORMS_MAX_RETRIES",
+        "description": "Maximum number of retry attempts",
+        "type": "number",
+        "default": 3
+      },
+      {
+        "name": "GRAVITY_FORMS_DEBUG",
+        "description": "Enable debug logging",
+        "type": "boolean",
+        "default": false
+      }
+    ]
+  },
+  "metadata": {
+    "author": "GravityKit",
+    "license": "MIT",
+    "repository": "https://github.com/GravityKit/gravity-mcp",
+    "documentation": "https://github.com/GravityKit/gravity-mcp#readme",
+    "api_coverage": "100%",
+    "total_tools": 24,
+    "authentication_methods": ["OAuth 1.0a", "Basic Authentication"],
+    "features": [
+      "Complete REST API v2 coverage",
+      "File upload support",
+      "Advanced search and filtering",
+      "Batch operations",
+      "Delete operation protection",
+      "Comprehensive error handling",
+      "Integration testing",
+      "Security validation"
+    ]
+  }
+}
