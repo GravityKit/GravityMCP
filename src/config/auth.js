@@ -7,6 +7,7 @@
  */
 
 import crypto from 'crypto';
+import logger from '../utils/logger.js';
 
 /**
  * Basic Authentication Handler (PRIMARY METHOD)
@@ -228,7 +229,7 @@ export class AuthManager {
     try {
       if (authMethod.toLowerCase() === 'oauth' || authMethod.toLowerCase() === 'oauth1') {
         if (this.config.GRAVITY_FORMS_DEBUG === 'true') {
-          console.log('🔐 Using OAuth 1.0a Authentication');
+          logger.info('🔐 Using OAuth 1.0a Authentication');
         }
         this.authHandler = new OAuth1Handler(
           GRAVITY_FORMS_CONSUMER_KEY,
@@ -237,7 +238,7 @@ export class AuthManager {
         );
       } else {
         if (this.config.GRAVITY_FORMS_DEBUG === 'true') {
-          console.log('🔐 Using Basic Authentication (Recommended for Gravity Forms v2)');
+          logger.info('🔐 Using Basic Authentication (Recommended for Gravity Forms v2)');
         }
         this.authHandler = new BasicAuthHandler(
           GRAVITY_FORMS_CONSUMER_KEY,

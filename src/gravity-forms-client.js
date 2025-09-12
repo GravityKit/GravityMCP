@@ -8,6 +8,7 @@ import axios from 'axios';
 import FormData from 'form-data';
 import { AuthManager, validateRestApiAccess } from './config/auth.js';
 import { ValidationFactory } from './config/validation.js';
+import logger from './utils/logger.js';
 
 export class GravityFormsClient {
   constructor(config) {
@@ -55,7 +56,7 @@ export class GravityFormsClient {
     this.httpClient.interceptors.response.use(
       (response) => {
         if (this.config.GRAVITY_FORMS_DEBUG === 'true') {
-          console.log(`✅ ${response.status} ${response.config.url}`);
+          logger.info(`✅ ${response.status} ${response.config.url}`);
         }
         return response;
       },
@@ -84,8 +85,8 @@ export class GravityFormsClient {
 
     // Only output initialization messages when not in test mode
     if (!isTest) {
-      console.log('🚀 Initializing Gravity MCP');
-      console.log(`📡 Connecting to: ${this.config.GRAVITY_FORMS_BASE_URL}`);
+      logger.info('🚀 Initializing Gravity MCP');
+      logger.info(`📡 Connecting to: ${this.config.GRAVITY_FORMS_BASE_URL}`);
     }
 
     // Validate REST API access
@@ -97,10 +98,10 @@ export class GravityFormsClient {
 
     if (!isTest) {
       const authInfo = this.authManager.getAuthInfo();
-      console.log(`🔐 Authentication: ${authInfo.method} ${authInfo.recommended ? '(Recommended)' : '(Secondary)'}`);
-      console.log(`🛡️ Security: ${authInfo.secure ? 'HTTPS ✅' : 'HTTP ⚠️'}`);
-      console.log(`🔧 API Access: ${validation.message}`);
-      console.log(`🗑️ Delete Operations: ${this.allowDelete ? 'ENABLED ⚠️' : 'DISABLED ✅'}`);
+      logger.info(`🔐 Authentication: ${authInfo.method} ${authInfo.recommended ? '(Recommended)' : '(Secondary)'}`);
+      logger.info(`🛡️ Security: ${authInfo.secure ? 'HTTPS ✅' : 'HTTP ⚠️'}`);
+      logger.info(`🔧 API Access: ${validation.message}`);
+      logger.info(`🗑️ Delete Operations: ${this.allowDelete ? 'ENABLED ⚠️' : 'DISABLED ✅'}`);
 
       if (!validation.fullAccess) {
         console.warn(`⚠️ Limited API access: ${validation.coverage}`);

@@ -17,6 +17,7 @@ import GravityFormsClient from './gravity-forms-client.js';
 import { createFieldOperations, fieldOperationHandlers, fieldOperationTools } from './field-operations/index.js';
 import fieldRegistry from './field-definitions/field-registry.js';
 import FieldAwareValidator from './config/field-validation.js';
+import logger from './utils/logger.js';
 
 // Load environment variables
 dotenv.config();
@@ -59,11 +60,11 @@ async function initializeClient() {
       fieldValidator
     );
 
-    console.log('✅ Gravity MCP initialized successfully');
-    console.log('✅ Field operations infrastructure initialized');
+    logger.info('✅ Gravity MCP initialized successfully');
+    logger.info('✅ Field operations infrastructure initialized');
     return true;
   } catch (error) {
-    console.error('❌ Failed to initialize:', error.message);
+    logger.error(`❌ Failed to initialize: ${error.message}`);
     throw error;
   }
 }
@@ -631,21 +632,21 @@ async function main() {
     // Connect server to transport
     await server.connect(transport);
 
-    console.log('🚀 Gravity MCP running on stdio');
+    logger.info('🚀 Gravity MCP running on stdio');
   } catch (error) {
-    console.error('Failed to start server:', error);
+    logger.error(`Failed to start server: ${error}`);
     process.exit(1);
   }
 }
 
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
-  console.log('\n👋 Shutting down Gravity MCP...');
+  logger.info('👋 Shutting down Gravity MCP...');
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  console.log('\n👋 Shutting down Gravity MCP...');
+  logger.info('👋 Shutting down Gravity MCP...');
   process.exit(0);
 });
 
