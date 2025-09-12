@@ -294,6 +294,17 @@ We welcome contributions from the Gravity Forms community! Whether you're buildi
 4. **Run the test suite** - Verify everything works with `npm run test:all`
 5. **Submit a pull request** - Share your improvements with the community
 
+### Automated Publishing
+
+This repository uses GitHub Actions to automatically publish to npm when a new version is tagged:
+
+1. Update the version in `package.json`
+2. Commit your changes
+3. Create and push a tag: `git tag v1.0.4 && git push origin v1.0.4`
+4. GitHub Actions will automatically publish to npm
+
+**Note for maintainers**: Ensure the `NPM_TOKEN` secret is configured in the repository settings for automated publishing to work.
+
 ### Contribution Ideas
 
 **For Add-on Developers:**
