@@ -18,6 +18,7 @@ import { createFieldOperations, fieldOperationHandlers, fieldOperationTools } fr
 import fieldRegistry from './field-definitions/field-registry.js';
 import FieldAwareValidator from './config/field-validation.js';
 import logger from './utils/logger.js';
+import { sanitize } from './utils/sanitize.js';
 
 // Load environment variables
 dotenv.config();
@@ -107,8 +108,10 @@ function wrapHandler(handler) {
         ]
       };
     } catch (error) {
+      // Sanitize error details to prevent logging sensitive data
+      const safeDetails = error.details ? sanitize(error.details) : undefined;
       console.error(`Tool error: ${error.message}`);
-      return createErrorResponse(error.message, error.details);
+      return createErrorResponse(error.message, safeDetails);
     }
   };
 }

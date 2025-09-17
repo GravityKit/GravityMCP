@@ -9,6 +9,7 @@ import FormData from 'form-data';
 import { AuthManager, validateRestApiAccess } from './config/auth.js';
 import { ValidationFactory } from './config/validation.js';
 import logger from './utils/logger.js';
+import { sanitizeUrl, sanitizeHeaders } from './utils/sanitize.js';
 
 export class GravityFormsClient {
   constructor(config) {
@@ -42,9 +43,14 @@ export class GravityFormsClient {
           ...authHeaders
         };
 
-        // Log request if debug enabled
+        // Log request if debug enabled (with sanitization)
         if (this.config.GRAVITY_FORMS_DEBUG === 'true') {
-          console.log(`🌐 ${requestConfig.method?.toUpperCase()} ${requestConfig.url}`);
+          const safeUrl = sanitizeUrl(`${this.baseURL}${requestConfig.url}`);
+          const safeHeaders = sanitizeHeaders(requestConfig.headers);
+          console.log(`🌐 ${requestConfig.method?.toUpperCase()} ${safeUrl}`);
+          if (requestConfig.data) {
+            console.log('  📦 Request data sent (sanitized)');
+          }
         }
 
         return requestConfig;
@@ -56,13 +62,15 @@ export class GravityFormsClient {
     this.httpClient.interceptors.response.use(
       (response) => {
         if (this.config.GRAVITY_FORMS_DEBUG === 'true') {
+          // Response URLs are relative paths without sensitive data
           logger.info(`✅ ${response.status} ${response.config.url}`);
         }
         return response;
       },
       (error) => {
         if (this.config.GRAVITY_FORMS_DEBUG === 'true') {
-          console.error(`❌ ${error.response?.status || 'Network Error'} ${error.config?.url}`);
+          // Error URLs are relative paths without sensitive data
+          console.error(`❌ ${error.response?.status || 'Network Error'} ${error.config?.url || ''}`);
         }
 
         // Enhanced error handling

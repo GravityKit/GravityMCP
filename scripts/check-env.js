@@ -46,8 +46,9 @@ required.forEach(key => {
   } else {
     configured.push(key);
     const value = process.env[key];
-    const masked = key.includes('SECRET')
-      ? value.substring(0, 5) + '...' + value.substring(value.length - 3)
+    // Mask all sensitive keys, not just those with SECRET in the name
+    const masked = key.includes('SECRET') || key.includes('KEY')
+      ? value.substring(0, 3) + '****' + value.substring(value.length - 2)
       : value;
     console.log(`✅ ${key}: ${masked}`);
   }
