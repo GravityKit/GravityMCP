@@ -1,4 +1,4 @@
-# GravityMCP
+# MCP for Gravity Forms
 
 A Model Context Protocol (MCP) server for Gravity Forms. Interact with your WordPress forms, feeds, and entries through any MCP-compatible client.
 
