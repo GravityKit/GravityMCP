@@ -5,6 +5,7 @@
  */
 
 import axios from 'axios';
+import https from 'https';
 import FormData from 'form-data';
 import { AuthManager, validateRestApiAccess } from './config/auth.js';
 import { ValidationFactory } from './config/validation.js';
@@ -24,7 +25,12 @@ export class GravityFormsClient {
       headers: {
         'User-Agent': 'Gravity MCP v1.0.0',
         'Accept': 'application/json'
-      }
+      },
+      // Allow self-signed certificates for local development
+      // Set MCP_ALLOW_SELF_SIGNED_CERTS=true in .env for local dev environments
+      httpsAgent: new https.Agent({
+        rejectUnauthorized: config.MCP_ALLOW_SELF_SIGNED_CERTS !== 'true'
+      })
     });
 
     // Request interceptor for authentication

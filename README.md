@@ -44,6 +44,12 @@ Built by [GravityKit](https://www.gravitykit.com) for the Gravity Forms communit
    GRAVITY_FORMS_BASE_URL=https://yoursite.com
    ```
 
+   **For local development** (Laravel Valet, MAMP, etc.):
+   ```env
+   # Add this line if using self-signed certificates
+   MCP_ALLOW_SELF_SIGNED_CERTS=true
+   ```
+
 4. **Generate API credentials** in WordPress:
    - Go to **Forms → Settings → REST API**
    - Click **Add Key**
@@ -150,9 +156,10 @@ await mcp.call('gf_submit_form_data', {
 - `GRAVITY_FORMS_BASE_URL`        - WordPress site URL
 
 ### Optional Settings
-- `GRAVITY_FORMS_ALLOW_DELETE=false` - Enable delete operations
-- `GRAVITY_FORMS_TIMEOUT=30000`      - Request timeout (ms)
-- `GRAVITY_FORMS_DEBUG=false`        - Enable debug logging
+- `GRAVITY_FORMS_ALLOW_DELETE=false`   - Enable delete operations
+- `GRAVITY_FORMS_TIMEOUT=30000`        - Request timeout (ms)
+- `GRAVITY_FORMS_DEBUG=false`          - Enable debug logging
+- `MCP_ALLOW_SELF_SIGNED_CERTS=false`  - Allow self-signed SSL certificates (local dev only)
 
 ## Test Environment Configuration
 
@@ -261,10 +268,22 @@ npm test
 - Ensure WordPress site is HTTPS-enabled
 - Check REST API is enabled in Gravity Forms settings
 
+### Local Development with Self-Signed Certificates
+
+If you're using a local development environment (Laravel Valet, MAMP, Local WP, etc.) with self-signed SSL certificates, you may encounter authentication errors. To fix this:
+
+Add to your `.env` file:
+```env
+MCP_ALLOW_SELF_SIGNED_CERTS=true
+```
+
+**⚠️ Security Warning**: Only disable SSL certificate verification for local development environments. Never use this setting in production!
+
 ### Authentication Errors
 - Confirm API keys are correct
 - Verify user has appropriate Gravity Forms capabilities
 - Check Forms → Settings → REST API for key status
+- For local development, ensure `MCP_ALLOW_SELF_SIGNED_CERTS=true` is set if using self-signed certificates
 
 ### Debug Mode
 Enable detailed logging:
