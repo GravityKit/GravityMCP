@@ -13,6 +13,8 @@ import {
   CallToolRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import GravityFormsClient from './gravity-forms-client.js';
 import { createFieldOperations, fieldOperationHandlers, fieldOperationTools } from './field-operations/index.js';
 import fieldRegistry from './field-definitions/field-registry.js';
@@ -20,8 +22,14 @@ import FieldAwareValidator from './config/field-validation.js';
 import logger from './utils/logger.js';
 import { sanitize } from './utils/sanitize.js';
 
-// Load environment variables
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables:
+// 	1. Current working directory first
+dotenv.config({ path: join(process.cwd(), '.env') });
+// 	2. Gravity MCP project directory
+dotenv.config({ path: join(__dirname, '..', '.env') });
 
 // Initialize the MCP server
 const server = new Server(
