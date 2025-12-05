@@ -6,11 +6,11 @@
 
 import axios from 'axios';
 import https from 'https';
-import FormData from 'form-data';
 import { AuthManager, validateRestApiAccess } from './config/auth.js';
 import { ValidationFactory } from './config/validation.js';
 import logger from './utils/logger.js';
 import { sanitizeUrl, sanitizeHeaders } from './utils/sanitize.js';
+import { generateCompoundInputs } from './field-definitions/field-registry.js';
 
 export class GravityFormsClient {
   constructor(config) {
@@ -226,6 +226,24 @@ export class GravityFormsClient {
    */
   async createForm(params) {
     return this.validateAndCall('gf_create_form', params, async (validated) => {
+      // Process fields to ensure compound types have proper inputs array.
+      if (validated.fields && Array.isArray(validated.fields)) {
+        validated.fields = validated.fields.map(field => {
+          if (field.inputs && Array.isArray(field.inputs) && field.inputs.length > 0) {
+            return field;
+          }
+
+          // Generate inputs for compound fields (address, name, creditcard, consent).
+          const inputs = generateCompoundInputs(field);
+
+          if (inputs) {
+            return { ...field, inputs };
+          }
+
+          return field;
+        });
+      }
+
       const response = await this.httpClient.post('/forms', validated);
 
       return {

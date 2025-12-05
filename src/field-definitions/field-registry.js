@@ -845,12 +845,98 @@ export function getFieldsByCategory() {
  */
 export function getCompoundFieldInputs(fieldType) {
   const field = fieldRegistry[fieldType];
-  
+
   if (!field || !field.isCompound || !field.storage.subInputs) {
     return null;
   }
-  
+
   return field.storage.subInputs;
+}
+
+/**
+ * Generate inputs array for compound fields (address, name, creditcard, etc.)
+ * This ensures compound fields have the required sub-input definitions.
+ *
+ * @param {object} field - The field object with id, type, and optional variant settings.
+ *
+ * @returns {array|null} Array of input definitions or null if not a compound field.
+ */
+export function generateCompoundInputs(field) {
+  const fieldDef = fieldRegistry[field.type];
+
+  if (!fieldDef || !fieldDef.isCompound) {
+    return null;
+  }
+
+  const baseId = field.id;
+  const subInputs = [];
+
+  // Address field sub-inputs.
+  if (field.type === 'address') {
+    const variant = field.addressType || 'us';
+
+    if (variant === 'us' || variant === 'international') {
+      subInputs.push(
+        { id: `${baseId}.1`, label: 'Street Address', name: '' },
+        { id: `${baseId}.2`, label: 'Address Line 2', name: '' },
+        { id: `${baseId}.3`, label: 'City', name: '' },
+        { id: `${baseId}.4`, label: variant === 'us' ? 'State' : 'State / Province', name: '' },
+        { id: `${baseId}.5`, label: variant === 'us' ? 'ZIP Code' : 'ZIP / Postal Code', name: '' },
+        { id: `${baseId}.6`, label: 'Country', name: '' }
+      );
+    } else if (variant === 'canadian') {
+      subInputs.push(
+        { id: `${baseId}.1`, label: 'Street Address', name: '' },
+        { id: `${baseId}.2`, label: 'Address Line 2', name: '' },
+        { id: `${baseId}.3`, label: 'City', name: '' },
+        { id: `${baseId}.4`, label: 'Province', name: '' },
+        { id: `${baseId}.5`, label: 'Postal Code', name: '' },
+        { id: `${baseId}.6`, label: 'Country', name: '' }
+      );
+    }
+  }
+
+  // Name field sub-inputs.
+  else if (field.type === 'name') {
+    const format = field.nameFormat || 'advanced';
+
+    if (format === 'advanced') {
+      subInputs.push(
+        { id: `${baseId}.2`, label: 'Prefix', name: '' },
+        { id: `${baseId}.3`, label: 'First', name: '' },
+        { id: `${baseId}.4`, label: 'Middle', name: '' },
+        { id: `${baseId}.6`, label: 'Last', name: '' },
+        { id: `${baseId}.8`, label: 'Suffix', name: '' }
+      );
+    } else {
+      subInputs.push(
+        { id: `${baseId}.3`, label: 'First', name: '' },
+        { id: `${baseId}.6`, label: 'Last', name: '' }
+      );
+    }
+  }
+
+  // Credit card field sub-inputs.
+  else if (field.type === 'creditcard') {
+    subInputs.push(
+      { id: `${baseId}.1`, label: 'Card Number', name: '' },
+      { id: `${baseId}.2`, label: 'Expiration Date', name: '' },
+      { id: `${baseId}.3`, label: 'Security Code', name: '' },
+      { id: `${baseId}.4`, label: 'Cardholder Name', name: '' },
+      { id: `${baseId}.5`, label: 'Card Type', name: '' }
+    );
+  }
+
+  // Consent field sub-inputs.
+  else if (field.type === 'consent') {
+    subInputs.push(
+      { id: `${baseId}.1`, label: 'Consent', name: '' },
+      { id: `${baseId}.2`, label: 'Text', name: '' },
+      { id: `${baseId}.3`, label: 'Description', name: '' }
+    );
+  }
+
+  return subInputs.length > 0 ? subInputs : null;
 }
 
 export default fieldRegistry;
