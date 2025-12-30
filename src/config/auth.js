@@ -317,10 +317,15 @@ export async function validateRestApiAccess(httpClient, authManager) {
       { path: '/feeds', name: 'Feeds' }
     ];
 
+    // Get baseURL from httpClient for OAuth signature generation
+    const baseURL = httpClient.defaults.baseURL;
+
     const results = [];
     for (const endpoint of endpoints) {
       try {
-        const headers = authManager.getAuthHeaders();
+        // Generate proper OAuth headers with full URL for signature
+        const fullUrl = `${baseURL}${endpoint.path}`;
+        const headers = authManager.getAuthHeaders('GET', fullUrl, { per_page: 1 });
         await httpClient.get(endpoint.path, {
           headers,
           params: { per_page: 1 }
