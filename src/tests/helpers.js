@@ -179,6 +179,7 @@ export class MockHttpClient {
     this.requests = [];
     this.responses = new Map();
     this.defaultResponse = new MockResponse();
+    this.defaults = { baseURL: 'https://test.example.com' };
   }
 
   /**
