@@ -154,10 +154,12 @@ suite.test('Integration: Create test form', async () => {
     button: {
       text: 'Submit Test'
     },
-    confirmations: [{
-      type: 'message',
-      message: 'Thank you for your test submission!'
-    }]
+    confirmations: {
+      conf_1: {
+        type: 'message',
+        message: 'Thank you for your test submission!'
+      }
+    }
   };
 
   const result = await client.createForm(formData);
