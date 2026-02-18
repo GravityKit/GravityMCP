@@ -309,13 +309,16 @@ export class FormsValidator extends BaseValidator {
     }
 
     if (formData.confirmations !== undefined) {
-      validated.confirmations = this.validateArray(formData.confirmations, 'confirmations');
-      validated.confirmations = validated.confirmations.map((conf, index) => {
+      validated.confirmations = this.validateObject(formData.confirmations, 'confirmations');
+      Object.entries(validated.confirmations).forEach(([key, conf]) => {
         if (conf.type === 'redirect' && conf.url !== undefined) {
-          conf.url = this.validateURL(conf.url, `confirmations[${index}].url`);
+          conf.url = this.validateURL(conf.url, `confirmations.${key}.url`);
         }
-        return conf;
       });
+    }
+
+    if (formData.notifications !== undefined) {
+      validated.notifications = this.validateObject(formData.notifications, 'notifications');
     }
 
     if (formData.schedule_start !== undefined) {

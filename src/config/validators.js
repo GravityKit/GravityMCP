@@ -88,12 +88,12 @@ export class FormsValidator {
         .array()
       )
       .field('confirmations', validate('confirmations')
-        .array()
+        .object()
         .custom((confirmations) => {
-          if (Array.isArray(confirmations)) {
-            confirmations.forEach((conf, index) => {
+          if (confirmations && typeof confirmations === 'object' && !Array.isArray(confirmations)) {
+            Object.entries(confirmations).forEach(([key, conf]) => {
               if (conf.type === 'redirect' && conf.url !== undefined) {
-                validate(`confirmations[${index}].url`)
+                validate(`confirmations.${key}.url`)
                   .required()
                   .string()
                   .url()
@@ -103,6 +103,9 @@ export class FormsValidator {
           }
           return true;
         })
+      )
+      .field('notifications', validate('notifications')
+        .object()
       )
       .field('schedule_start', validate('schedule_start')
         .string()
