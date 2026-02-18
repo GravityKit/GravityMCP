@@ -90,7 +90,7 @@ export class FormsValidator {
       .field('confirmations', validate('confirmations')
         .object()
         .custom((confirmations) => {
-          if (confirmations && typeof confirmations === 'object' && !Array.isArray(confirmations)) {
+          if (confirmations && typeof confirmations === 'object') {
             Object.entries(confirmations).forEach(([key, conf]) => {
               if (conf.type === 'redirect' && conf.url !== undefined) {
                 validate(`confirmations.${key}.url`)

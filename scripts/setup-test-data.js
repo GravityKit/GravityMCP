@@ -138,16 +138,20 @@ const testForms = [
     button: {
       text: 'Send Message'
     },
-    confirmations: [{
-      type: 'message',
-      message: '<p>Thank you for contacting us! We\'ll respond within 24 hours.</p>'
-    }],
-    notifications: [{
-      name: 'Admin Notification',
-      to: '{admin_email}',
-      subject: 'New Contact Form Submission',
-      message: 'You have a new contact form submission from {Name:1}.'
-    }]
+    confirmations: {
+      conf_1: {
+        type: 'message',
+        message: '<p>Thank you for contacting us! We\'ll respond within 24 hours.</p>'
+      }
+    },
+    notifications: {
+      notif_1: {
+        name: 'Admin Notification',
+        to: '{admin_email}',
+        subject: 'New Contact Form Submission',
+        message: 'You have a new contact form submission from {Name:1}.'
+      }
+    }
   },
   {
     title: 'Newsletter Signup (Test)',
@@ -193,10 +197,12 @@ const testForms = [
     button: {
       text: 'Subscribe'
     },
-    confirmations: [{
-      type: 'message',
-      message: '<p>Success! Please check your email to confirm your subscription.</p>'
-    }]
+    confirmations: {
+      conf_1: {
+        type: 'message',
+        message: '<p>Success! Please check your email to confirm your subscription.</p>'
+      }
+    }
   },
   {
     title: 'Multi-Page Survey (Test)',
@@ -263,10 +269,12 @@ const testForms = [
     button: {
       text: 'Submit Survey'
     },
-    confirmations: [{
-      type: 'message',
-      message: '<p>Thank you for your feedback!</p>'
-    }]
+    confirmations: {
+      conf_1: {
+        type: 'message',
+        message: '<p>Thank you for your feedback!</p>'
+      }
+    }
   }
 ];
 

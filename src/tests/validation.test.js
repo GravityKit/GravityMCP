@@ -411,10 +411,12 @@ suite.test('Format Validation: URLs', async () => {
   await TestAssert.throwsAsync(
     () => client.createForm({
       title: 'Test',
-      confirmations: [{
-        type: 'redirect',
-        url: 'not-a-url'
-      }]
+      confirmations: {
+        conf_1: {
+          type: 'redirect',
+          url: 'not-a-url'
+        }
+      }
     }),
     'valid URL',
     'Should validate URL format'
@@ -427,10 +429,12 @@ suite.test('Format Validation: URLs', async () => {
 
   await client.createForm({
     title: 'Test',
-    confirmations: [{
-      type: 'redirect',
-      url: 'https://example.com'
-    }]
+    confirmations: {
+      conf_1: {
+        type: 'redirect',
+        url: 'https://example.com'
+      }
+    }
   });
 });
 

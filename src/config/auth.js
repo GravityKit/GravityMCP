@@ -318,7 +318,7 @@ export async function validateRestApiAccess(httpClient, authManager) {
     ];
 
     // Get baseURL from httpClient for OAuth signature generation
-    const baseURL = httpClient.defaults.baseURL;
+    const baseURL = httpClient?.defaults?.baseURL;
 
     if (!baseURL) {
       throw new Error('httpClient baseURL is not configured');
