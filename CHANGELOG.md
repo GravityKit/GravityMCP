@@ -5,6 +5,32 @@ All notable changes to GravityMCP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2026-02-18
+
+### Fixed
+- Fixed OAuth signature generation in `validateRestApiAccess` to pass full URL, method, and params to `getAuthHeaders()`
+- Fixed confirmations and notifications validation to accept objects keyed by ID instead of arrays, matching Gravity Forms' actual data format
+- Added defensive optional chaining for `httpClient.defaults.baseURL`
+
+### Changed
+- Updated test helpers: added `defaults.baseURL` to MockHttpClient
+- Updated test data and validation tests to use object format for confirmations and notifications
+
+## [1.0.4] - 2025-01-13
+
+### Added
+- Comprehensive data sanitization for secure logging
+- GitHub Actions workflows for automated testing and publishing
+- Self-signed SSL certificate support for local development
+- Auto-generate inputs array for compound fields in `gf_create_form`
+- Load `.env` from working directory with project fallback
+
+### Fixed
+- Updated CodeQL Action to v3
+
+### Changed
+- Removed local Claude settings from version control
+
 ## [1.0.3] - 2024-12-09
 
 ### Changed
@@ -46,6 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Field filters (1 tool)
 - Results/Analytics (1 tool)
 
+[1.0.5]: https://github.com/GravityKit/GravityMCP/releases/tag/v1.0.5
+[1.0.4]: https://github.com/GravityKit/GravityMCP/releases/tag/v1.0.4
 [1.0.3]: https://github.com/GravityKit/GravityMCP/releases/tag/v1.0.3
 [1.0.2]: https://github.com/GravityKit/GravityMCP/releases/tag/v1.0.2
 [1.0.1]: https://github.com/GravityKit/GravityMCP/releases/tag/v1.0.1

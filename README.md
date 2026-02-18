@@ -319,7 +319,7 @@ This repository uses GitHub Actions to automatically publish to npm when a new v
 
 1. Update the version in `package.json`
 2. Commit your changes
-3. Create and push a tag: `git tag v1.0.4 && git push origin v1.0.4`
+3. Create and push a tag: `git tag v1.0.5 && git push origin v1.0.5`
 4. GitHub Actions will automatically publish to npm
 
 **Note for maintainers**: Ensure the `NPM_TOKEN` secret is configured in the repository settings for automated publishing to work.
