@@ -35,6 +35,7 @@ export function createFieldOperations(apiClient, fieldRegistry, validator) {
 
   return {
     fieldManager,
+    fieldRegistry,
     dependencyTracker,
     positionEngine,
     testFormManager,

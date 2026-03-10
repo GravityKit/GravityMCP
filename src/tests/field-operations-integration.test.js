@@ -134,7 +134,8 @@ async function setup() {
       positionEngine: {
         calculatePosition: (fields, config) => fields.length
       },
-      config: testConfig
+      config: testConfig,
+      fieldRegistry
     };
 
     console.log('✅ Test environment initialized');

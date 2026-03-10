@@ -28,7 +28,7 @@ export class FieldManager {
     }
 
     // 2. Fetch current form via REST API
-    const form = await this.api.getForm(formId);
+    const { form } = await this.api.getForm({ id: formId });
     
     // 3. Generate unique integer field ID (max + 1 pattern)
     const fieldId = this.generateFieldId(form.fields || []);
@@ -73,7 +73,7 @@ export class FieldManager {
    */
   async updateField(formId, fieldId, updates = {}) {
     // Fetch form
-    const form = await this.api.getForm(formId);
+    const { form } = await this.api.getForm({ id: formId });
     
     // Find field
     const fieldIndex = form.fields?.findIndex(f => f.id == fieldId);
@@ -117,7 +117,7 @@ export class FieldManager {
     const { cascade = false, force = false } = options;
     
     // Fetch form
-    const form = await this.api.getForm(formId);
+    const { form } = await this.api.getForm({ id: formId });
     
     // Check field exists
     const field = form.fields?.find(f => f.id == fieldId);
