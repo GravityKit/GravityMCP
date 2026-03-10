@@ -1,595 +1,316 @@
-# Gravity MCP Server - Project Documentation
+# AGENTS.md — GravityMCP
 
-## Overview
-A comprehensive MCP (Model Context Protocol) server implementation for the Gravity Forms ecosystem, providing complete REST API v2 coverage through 28 specialized tools. This server enables AI agents to interact with Gravity Forms programmatically with full authentication, field operations, and advanced filtering capabilities.
+> MCP server providing 28 tools for full Gravity Forms REST API v2 coverage, enabling AI agents to manage forms, entries, feeds, notifications, and fields programmatically.
 
-## 🏗️ Project Structure
+## Quick Start
+
+**What this is:** A Node.js MCP (Model Context Protocol) server that wraps the Gravity Forms REST API v2. It authenticates via Basic Auth (preferred) or OAuth 1.0a and exposes 28 tools for CRUD operations on forms, entries, feeds, notifications, field filters, results, and intelligent field management.
+
+**Main entry point:** `src/index.js`
+**Architecture style:** MCP SDK server with stdio transport, single API client, composable validation
+**Key dependency:** `@modelcontextprotocol/sdk` ^1.0.0
+
+## Repository Map
+
 ```
-GravityMCP/
-├── package.json
-├── README.md
-├── .env.example
-├── .gitignore
-├── .npmignore
-├── LICENSE
-├── mcp.json
-├── CLAUDE.md
+gravitymcp/
+├── package.json              # @gravitykit/gravitymcp, ESM, npm scripts
+├── mcp.json                  # MCP manifest (tool catalog, auth config)
+├── .env.example              # All env vars documented
+├── CLAUDE.md                 # Project docs for AI context
 ├── src/
-│   ├── index.js (main server)
-│   ├── gravity-forms-client.js (API client)
-│   ├── field-operations/                    # NEW: Intelligent field management system
-│   │   ├── index.js                        # Main exports and MCP tool definitions
-│   │   ├── field-manager.js                # Core CRUD orchestrator
-│   │   ├── field-dependencies.js           # Dependency scanning and tracking
-│   │   └── field-positioner.js             # Page-aware field positioning
-│   ├── field-definitions/                  # Field type registry and definitions
-│   │   └── field-registry.js               # All 44 field types with metadata
+│   ├── index.js              # Server bootstrap, tool registration, handler routing
+│   ├── gravity-forms-client.js  # GravityFormsClient: HTTP client, all API methods
+│   ├── field-operations/     # Intelligent field management layer
+│   │   ├── index.js          # Factory, tool definitions, handler functions
+│   │   ├── field-manager.js  # FieldManager: CRUD orchestrator
+│   │   ├── field-dependencies.js  # DependencyTracker: conditional logic/merge tag scanning
+│   │   └── field-positioner.js    # PositionEngine: page-aware field positioning
+│   ├── field-definitions/
+│   │   ├── field-registry.js # 44 field types with metadata, validation, storage patterns
+│   │   └── loader.js         # Registry loader
 │   ├── config/
-│   │   ├── auth.js
-│   │   ├── validation.js
-│   │   ├── field-validation.js             # Field-specific validation logic
-│   │   └── test-config.js                  # Dual test/live configuration
+│   │   ├── auth.js           # BasicAuthHandler, OAuth1Handler, AuthManager
+│   │   ├── validation.js     # ValidationFactory, BaseValidator, domain validators
+│   │   ├── validation-chain.js  # Composable rule chain system
+│   │   ├── validation-rules.js  # Individual validation rules
+│   │   ├── validation-config.js # Validation constants and enums
+│   │   ├── validators.js     # Domain-specific validators (forms, entries, feeds, etc.)
+│   │   ├── field-validation.js  # FieldAwareValidator for field-specific rules
+│   │   └── test-config.js    # Dual test/live environment config, TestFormManager
+│   ├── utils/
+│   │   ├── logger.js         # MCP-safe logger (stderr in MCP mode, console in test)
+│   │   └── sanitize.js       # Credential masking for safe logging
 │   └── tests/
-│       ├── run.js (test runner)
-│       ├── helpers.js (test utilities)
-│       ├── integration.test.js (live API tests)
-│       ├── server-tools.test.js (tool validation)
-│       ├── forms.test.js (forms endpoint tests)
-│       ├── entries.test.js (entries endpoint tests)
-│       ├── feeds.test.js (feeds endpoint tests)
-│       ├── notifications.test.js (notifications tests)
-│       ├── results.test.js (results tests)
-│       ├── submissions.test.js (submissions tests)
-│       ├── validations.test.js (validation tests)
-│       └── authentication.test.js (auth tests)
+│       ├── run.js            # Test runner
+│       ├── helpers.js        # Mock data generators, test utilities
+│       ├── integration.test.js          # Live API integration tests
+│       ├── server-tools.test.js         # Tool registration validation
+│       ├── forms.test.js                # Forms endpoint tests
+│       ├── entries.test.js              # Entries endpoint tests
+│       ├── feeds.test.js                # Feeds endpoint tests
+│       ├── submissions.test.js          # Submission pipeline tests
+│       ├── authentication.test.js       # Auth method tests
+│       ├── validation.test.js           # Input validation tests
+│       ├── field-validation.test.js     # Field-specific validation
+│       ├── field-manager.test.js        # FieldManager unit tests
+│       ├── field-dependencies.test.js   # DependencyTracker tests
+│       ├── field-positioner.test.js     # PositionEngine tests
+│       ├── field-registry.test.js       # Field registry tests
+│       ├── field-operations-e2e.test.js # Field operations E2E
+│       ├── field-operations-integration.test.js # Field ops integration
+│       └── sanitize.test.js            # Sanitization tests
 └── scripts/
-    ├── check-env.js
-    └── setup-test-data.js
+    ├── check-env.js          # Environment validation script
+    └── setup-test-data.js    # Test data seeding
 ```
 
-## 🔧 Technical Architecture
+## Architecture
 
-### 1. Authentication System
-- **OAuth 1.0a Authentication** (recommended by GF)
-- **Basic Authentication** (HTTPS only)
-- Consumer Key/Secret configuration
-- Environment variable validation
-- **DELETE operations disabled by default** (ENV flag to enable)
+### Initialization Flow
 
-### 2. Implemented API Coverage
+1. `src/index.js` loads env vars via dotenv (CWD first, then project dir) — `:30-32`
+2. Creates MCP `Server` instance with `tools` capability — `:35-45`
+3. `initializeClient()` constructs `GravityFormsClient` with `process.env` — `:57`
+4. Client creates `AuthManager` which selects Basic or OAuth handler — `config/auth.js:223-268`
+5. Client creates axios instance with auth interceptor — `gravity-forms-client.js:22-85`
+6. `validateRestApiAccess()` tests Forms/Entries/Feeds endpoints — `config/auth.js:301-368`
+7. Field operations initialized: `FieldManager`, `DependencyTracker`, `PositionEngine` — `:64-70`
+8. Server connects to `StdioServerTransport` — `:641-644`
 
-#### **Forms Management** (6 tools)
-- `gf_list_forms` - Get all forms with filtering
-- `gf_get_form` - Get specific form by ID
-- `gf_create_form` - Create new form
-- `gf_update_form` - Update existing form
-- `gf_delete_form` - Delete/trash form (with force option)
-- `gf_validate_form` - Validate form submission data
+### Core Concepts
 
-#### **Entries Management** (6 tools)
-- `gf_list_entries` - Search and list entries with advanced filtering
-- `gf_get_entry` - Get specific entry by ID
-- `gf_create_entry` - Create new entry
-- `gf_update_entry` - Update existing entry
-- `gf_delete_entry` - Delete/trash entry (with force option)
-- `gf_submit_form` - Complete form submission process
+**GravityFormsClient** (`gravity-forms-client.js`): Single class wrapping all API endpoints. Each method uses `validateAndCall(toolName, input, apiCall)` pattern — validates input via `ValidationFactory`, then executes the HTTP call. Update operations (forms, entries, feeds) fetch-then-merge to preserve existing data.
 
-#### **Form Submissions** (2 tools)
-- `gf_submit_form_data` - Submit form with full processing
-- `gf_validate_submission` - Validate submission without processing
+**AuthManager** (`config/auth.js`): Selects between `BasicAuthHandler` (primary, requires HTTPS) and `OAuth1Handler` (fallback). Auto-falls-back to OAuth if HTTPS isn't available. Auth headers injected via axios request interceptor.
 
-#### **Notifications** (1 tool)
-- `gf_send_notifications` - Send notifications for entry
+**ValidationFactory** (`config/validation.js`): Central validation dispatcher. `validateToolInput(toolName, input)` routes to domain-specific validators. Composable rule chains (`validation-chain.js`) for reusable validation logic.
 
-#### **Add-on Feeds** (7 tools)
-- `gf_list_feeds` - List all feeds or by addon
-- `gf_get_feed` - Get specific feed
-- `gf_list_form_feeds` - Get feeds for specific form
-- `gf_create_feed` - Create new feed
-- `gf_update_feed` - Update existing feed
-- `gf_patch_feed` - Partially update feed
-- `gf_delete_feed` - Delete feed
+**FieldManager** (`field-operations/field-manager.js`): Handles field CRUD within REST API v2 constraints (fields are properties of form objects, not separate endpoints). Generates integer IDs via max+1 pattern, creates compound sub-inputs for address/name/creditcard fields.
 
-#### **Field Filters** (1 tool)
-- `gf_get_field_filters` - Get field filters for form
+**Field Registry** (`field-definitions/field-registry.js`): Metadata for all 44 Gravity Forms field types including categories, storage patterns (simple/compound/special), validation rules, variants, and capability flags.
 
-#### **Results/Analytics** (1 tool)
-- `gf_get_results` - Get Quiz/Poll/Survey results
+### Data Flow
 
-#### **Field Operations** (4 tools) - NEW Intelligent Field Management
-- `gf_add_field` - Add fields with auto ID generation and compound field support
-- `gf_update_field` - Update fields with dependency checking
-- `gf_delete_field` - Delete fields with cascade options
-- `gf_list_field_types` - List available field types with filtering
-
-**Implementation Complete: 28 MCP Tools providing 100% Gravity Forms REST API v2 coverage + Enhanced Field Operations**
-
-### 3. Field Operations Architecture
-
-#### **Implemented Design Decisions**
-- **Integer Field IDs**: Auto-generation using max+1 pattern to avoid collisions
-- **Compound Field Support**: Automatic sub-input generation (address.1, name.3, etc.)
-- **REST API Constraints**: Fields managed as part of form objects (no direct endpoints)
-- **Dependency Tracking**: Comprehensive scanning for conditional logic, calculations, merge tags
-- **Page-Aware Positioning**: Intelligent field placement in multi-page forms
-- **Dual Configuration**: Test/live environment separation for safe development
-
-#### **Infrastructure Components**
-
-**FieldManager** (`field-manager.js`)
-- Core orchestrator for all field CRUD operations
-- Handles REST API v2 constraints (fields within forms)
-- Generates unique integer field IDs (max+1 pattern)
-- Creates compound sub-inputs for complex fields
-- Integrates with dependency tracker and position engine
-
-**DependencyTracker** (`field-dependencies.js`)
-- Scans forms for field references in:
-  - Conditional logic rules
-  - Calculation formulas
-  - Merge tags in notifications/confirmations
-  - Dynamic population parameters
-- Provides breaking change warnings
-- Enables safe cascade deletions
-
-**PositionEngine** (`field-positioner.js`)
-- Calculates insertion positions with modes:
-  - append, prepend, after, before, index
-- Page-aware for multi-page forms
-- Handles page boundaries and field ordering
-- Validates position configurations
-
-**Test Configuration** (`test-config.js`)
-- Dual environment support (test/live)
-- Automatic test form cleanup
-- Form prefix management (TEST_)
-- Environment validation
-
-#### **Field Type Support**
-All 44 Gravity Forms field types supported with:
-- Type-specific defaults
-- Validation rules
-- Storage patterns (simple, compound, special)
-- Variant configurations (US/international address, etc.)
-- Sub-input generation for compound fields
-
-### 4. Advanced Features
-
-#### **Search & Filtering**
-- Complete field filter support with all operators (`=`, `IS`, `CONTAINS`, `IS NOT`, `ISNOT`, `<>`, `LIKE`, `NOT IN`, `NOTIN`, `IN`)
-- Pagination with proper metadata
-- Sorting by multiple fields with direction control
-- Status filtering (active, spam, trash)
-- Date range filtering with ISO 8601 support
-- Custom field filtering with type awareness
-- Complex search conditions with AND/OR logic
-
-#### **Batch Operations**
-- Bulk entry creation with validation
-- Bulk entry updates with error handling
-- Bulk operations with progress tracking
-- Retry logic for failed operations
-
-#### **File Upload Support**
-- Single file upload fields via multipart/form-data
-- Multi-file upload handling where supported
-- File type validation against form settings
-- File size limits enforcement
-- Base64 encoding for JSON submissions
-
-### 4. Configuration & Security
-
-#### **Environment Variables**
-```env
-# Required
-GRAVITY_FORMS_CONSUMER_KEY=ck_...
-GRAVITY_FORMS_CONSUMER_SECRET=cs_...
-GRAVITY_FORMS_BASE_URL=https://yoursite.com
-
-# Optional Security
-GRAVITY_FORMS_ALLOW_DELETE=false
-
-# Optional Configuration
-GRAVITY_FORMS_TIMEOUT=30000
-GRAVITY_FORMS_DEBUG=false
-GRAVITY_FORMS_MAX_RETRIES=3
-GRAVITY_FORMS_RETRY_DELAY=1000
+```
+MCP Client → stdio → Server.CallToolRequestSchema handler
+  → switch(name) routes to handler
+  → wrapHandler() wraps execution:
+    → GravityFormsClient.method(params)
+      → validateAndCall(toolName, input, apiCall)
+        → ValidationFactory.validateToolInput() → validated input
+        → apiCall(validatedInput) → axios HTTP request
+          → auth interceptor adds headers
+          → response interceptor handles errors
+      → structured result object
+    → JSON.stringify → MCP content block
+  ← { content: [{ type: "text", text: "..." }] }
 ```
 
-#### **Security Features**
-- API key validation on startup with connection test
-- REST API availability check with capability verification
-- Rate limiting with exponential backoff
-- Secure credential storage (never logged)
-- Delete operations safety switch (ENV flag required)
-- Input sanitization and validation
-- OAuth 1.0a signature generation
-- HTTPS enforcement for Basic auth
+### Tool Categories
 
-## 🧪 Comprehensive Testing Strategy
+| Category | Tools | Client Methods |
+|----------|-------|----------------|
+| Forms | `gf_list_forms`, `gf_get_form`, `gf_create_form`, `gf_update_form`, `gf_delete_form`, `gf_validate_form` | `listForms`, `getForm`, `createForm`, `updateForm`, `deleteForm`, `validateForm` |
+| Entries | `gf_list_entries`, `gf_get_entry`, `gf_create_entry`, `gf_update_entry`, `gf_delete_entry` | `listEntries`, `getEntry`, `createEntry`, `updateEntry`, `deleteEntry` |
+| Submissions | `gf_submit_form_data`, `gf_validate_submission` | `submitFormData`, `validateSubmission` |
+| Notifications | `gf_send_notifications` | `sendNotifications` |
+| Feeds | `gf_list_feeds`, `gf_get_feed`, `gf_list_form_feeds`, `gf_create_feed`, `gf_update_feed`, `gf_patch_feed`, `gf_delete_feed` | `listFeeds`, `getFeed`, `listFormFeeds`, `createFeed`, `updateFeed`, `patchFeed`, `deleteFeed` |
+| Utilities | `gf_get_field_filters`, `gf_get_results` | `getFieldFilters`, `getResults` |
+| Field Ops | `gf_add_field`, `gf_update_field`, `gf_delete_field`, `gf_list_field_types` | Handled via `fieldOperationHandlers` → `FieldManager` |
 
-### Test Coverage Requirements
-- **Happy Path Tests**: Normal operations work correctly
-- **Edge Case Tests**: Boundary conditions, special values, large datasets
-- **Failure Mode Tests**: Error handling, invalid inputs, network failures
-- **Integration Tests**: Real API interactions with cleanup
-- **Unit Tests**: Individual function validation with mocks
+## Conventions
 
-### Test Categories
+### File & Class Naming
 
-#### **1. Authentication Tests** (`authentication.test.js`)
-**Happy Path:**
-- ✅ Valid OAuth 1.0a credentials connect successfully
-- ✅ Valid Basic auth credentials work over HTTPS
-- ✅ REST API availability check passes
-- ✅ Consumer key/secret validation works
+- Files: `kebab-case.js` (e.g., `field-manager.js`, `gravity-forms-client.js`)
+- Classes: `PascalCase` (e.g., `GravityFormsClient`, `FieldManager`, `AuthManager`)
+- Exports: Named exports for classes, default export for primary class per file
+- Test files: `{module-name}.test.js` alongside or in `tests/` directory
 
-**Edge Cases:**
-- 🔄 Network timeout handling
-- 🔄 Rate limit response handling
-- 🔄 Invalid timestamp in OAuth signature
-- 🔄 Expired nonce handling
+### Module System
 
-**Failure Modes:**
-- ❌ Invalid consumer key returns 401
-- ❌ Invalid consumer secret returns 401
-- ❌ Missing credentials throw configuration error
-- ❌ HTTP (non-HTTPS) Basic auth rejected
-- ❌ Network failures handled gracefully
-- ❌ Malformed OAuth signature rejected
+- ESM throughout (`"type": "module"` in package.json)
+- All imports use `.js` extension (required for ESM)
+- `__dirname` shimmed via `fileURLToPath(import.meta.url)` in `src/index.js:25-26`
 
-#### **2. Forms Tests** (`forms.test.js`)
-**Happy Path:**
-- ✅ List all forms with pagination
-- ✅ Get specific form by ID with full schema
-- ✅ Create new form with fields and settings
-- ✅ Update existing form preserving data
-- ✅ Delete/trash form with proper confirmation
-- ✅ Validate form submission data
+### Error Handling Pattern
 
-**Edge Cases:**
-- 🔄 Empty forms (no fields)
-- 🔄 Large forms (100+ fields)
-- 🔄 Forms with complex conditional logic
-- 🔄 Forms with all field types
-- 🔄 Multi-page forms with page breaks
-- 🔄 Forms with unicode/special characters
-- 🔄 Forms with file upload fields
+All tool handlers use `wrapHandler()` (`src/index.js:99-125`):
+- Checks client initialization
+- Wraps result in MCP content blocks `{ content: [{ type: "text", text: JSON.stringify(result) }] }`
+- Catches errors → `createErrorResponse()` with sanitized details
+- Error details pass through `sanitize()` to mask credentials
 
-**Failure Modes:**
-- ❌ Invalid form ID returns 404
-- ❌ Malformed form data rejected
-- ❌ Missing required form properties
-- ❌ Permission errors (insufficient capabilities)
-- ❌ Duplicate form titles handled
-- ❌ Delete force parameter validation
+### API Method Pattern
 
-#### **3. Entries Tests** (`entries.test.js`)
-**Happy Path:**
-- ✅ List entries with filtering and pagination
-- ✅ Get specific entry with field labels
-- ✅ Create new entry with validation
-- ✅ Update existing entry preserving metadata
-- ✅ Delete/trash entry with confirmation
-- ✅ Search entries with complex filters
+Every `GravityFormsClient` method follows this pattern:
+```javascript
+async methodName(params) {
+  return this.validateAndCall('tool_name', params, async (validated) => {
+    // HTTP call with validated input
+    const response = await this.httpClient.get/post/put/delete(path, data);
+    // Return structured result
+    return { resource: response.data, metadata... };
+  });
+}
+```
 
-**Edge Cases:**
-- 🔄 Large datasets (1000+ entries)
-- 🔄 Entries with file uploads
-- 🔄 Entries with payment fields
-- 🔄 Entries with complex field combinations
-- 🔄 Date boundary searches
-- 🔄 Custom field filtering
-- 🔄 Multi-page form entries
+Update methods (forms, entries, feeds) always **fetch-then-merge** to preserve existing data:
+```javascript
+const existing = await this.httpClient.get(`/resource/${id}`);
+const merged = { ...existing.data, ...updates };
+await this.httpClient.put(`/resource/${id}`, merged);
+```
 
-**Failure Modes:**
-- ❌ Invalid entry ID returns 404
-- ❌ Field validation errors on create/update
-- ❌ Required field violations
-- ❌ Invalid search parameters
-- ❌ Permission errors for entry access
-- ❌ Malformed entry data rejected
+### Delete Safety
 
-#### **4. Submissions Tests** (`submissions.test.js`)
-**Happy Path:**
-- ✅ Complete form submission with validation
-- ✅ Multi-page form progression
-- ✅ File upload submissions
-- ✅ Conditional logic evaluation
-- ✅ Notification triggering
-- ✅ Confirmation message display
+All delete operations (`deleteForm`, `deleteEntry`, `deleteFeed`) check `this.allowDelete` first, controlled by `GRAVITY_FORMS_ALLOW_DELETE=true` env var. Without it, deletes throw immediately.
 
-**Edge Cases:**
-- 🔄 Large file uploads
-- 🔄 Multiple file uploads
-- 🔄 Forms with save-and-continue
-- 🔄 Forms with complex validation rules
-- 🔄 Forms with anti-spam measures
-- 🔄 International characters in submissions
+### Logging
 
-**Failure Modes:**
-- ❌ Validation errors prevent submission
-- ❌ Spam detection blocks submission
-- ❌ Required field validation
-- ❌ File type restrictions enforced
-- ❌ File size limits respected
-- ❌ Network failures during submission
+`utils/logger.js` routes all logs to stderr in MCP mode (keeps stdout clean for JSON-RPC). In test mode, uses console.log. Sensitive data masked via `utils/sanitize.js`.
 
-#### **5. Feeds Tests** (`feeds.test.js`)
-**Happy Path:**
-- ✅ List feeds by addon type
-- ✅ Get specific feed configuration
-- ✅ Create feeds for different addons
-- ✅ Update feed settings
-- ✅ Partially update feed (PATCH)
-- ✅ Delete feeds with confirmation
+## Extension Patterns
 
-**Edge Cases:**
-- 🔄 Feeds with complex field mappings
-- 🔄 Feeds with conditional logic
-- 🔄 Feeds for all supported addons
-- 🔄 Inactive/active feed state changes
-- 🔄 Feed ordering and priority
+### Adding a New Tool
 
-**Failure Modes:**
-- ❌ Invalid addon slug rejected
-- ❌ Missing required feed settings
-- ❌ Invalid field mappings
-- ❌ Permission errors for feed management
-- ❌ Addon not installed/active
+1. **Define the tool schema** in `src/index.js` inside the `ListToolsRequestSchema` handler (`:131-519`). Add to the tools array:
+   ```javascript
+   {
+     name: 'gf_new_tool',
+     description: 'Description',
+     inputSchema: { type: 'object', properties: {...}, required: [...] }
+   }
+   ```
 
-#### **6. Notifications Tests** (`notifications.test.js`)
-**Happy Path:**
-- ✅ Send notifications for entry
-- ✅ Send specific notifications by ID
-- ✅ Trigger notifications by event
-- ✅ Handle multiple notifications
-- ✅ Process notification templates
+2. **Add the client method** in `gravity-forms-client.js` using `validateAndCall`:
+   ```javascript
+   async newToolMethod(params) {
+     return this.validateAndCall('gf_new_tool', params, async (validated) => {
+       const response = await this.httpClient.get('/endpoint');
+       return { data: response.data };
+     });
+   }
+   ```
 
-**Edge Cases:**
-- 🔄 Notifications with conditional logic
-- 🔄 Notifications with file attachments
-- 🔄 Notifications with merge tags
-- 🔄 Delayed notification sending
+3. **Add validation** in `config/validation.js` inside `ValidationFactory.validateToolInput()` (`:463-628`):
+   ```javascript
+   case 'gf_new_tool':
+     BaseValidator.validateRequired(input, ['required_field']);
+     return { required_field: BaseValidator.validateId(input.required_field) };
+   ```
 
-**Failure Modes:**
-- ❌ Invalid notification ID
-- ❌ Missing entry for notification
-- ❌ Invalid email addresses
-- ❌ Notification template errors
+4. **Add the handler route** in `src/index.js` inside the `CallToolRequestSchema` handler switch (`:537-628`):
+   ```javascript
+   case 'gf_new_tool':
+     return wrapHandler(() => gravityFormsClient.newToolMethod(params))();
+   ```
 
-#### **7. Results Tests** (`results.test.js`)
-**Happy Path:**
-- ✅ Get Quiz form results
-- ✅ Get Poll form results
-- ✅ Get Survey form results
-- ✅ Apply search filters to results
-- ✅ Handle complete/incomplete result status
+5. **Add tests** — create test in `src/tests/` following existing patterns (see `forms.test.js` for reference).
 
-**Edge Cases:**
-- 🔄 Large result datasets
-- 🔄 Results with date filtering
-- 🔄 Results with field-specific filters
-- 🔄 Results with no entries
+### Adding a New Field Type to the Registry
 
-**Failure Modes:**
-- ❌ Results for non-Quiz/Poll/Survey forms
-- ❌ Invalid search parameters
-- ❌ No results available
+Add an entry in `field-definitions/field-registry.js`:
+```javascript
+newfield: {
+  type: 'newfield',
+  label: 'My New Field',
+  category: 'standard',  // standard | advanced | pricing | post
+  supportsRequired: true,
+  supportsConditionalLogic: true,
+  storage: { type: 'string', format: 'single' },  // or 'compound'
+  validation: { maxLength: 255 },
+  variants: { default: { label: 'Default', settings: {} } }
+}
+```
 
-#### **8. Tool Validation Tests** (`server-tools.test.js`)
-**Validation Checks:**
-- ✅ Verify all 24 tools are properly registered
-- ✅ Validate input schemas for each tool
-- ✅ Check tool descriptions and parameters
-- ✅ Verify required vs optional parameters
-- ✅ Validate parameter types and constraints
-- ✅ Check handler function coverage
-- ✅ Verify error handling in all tools
+For compound fields (multi-input like address/name), set `storage.type: 'compound'` and add sub-input generation logic in `field-manager.js:generateSubInputs()` (`:206-267`).
 
-### Test Infrastructure
+### Adding a New Validation Rule
 
-#### **Mock System**
-- **FakeAxios**: Mock HTTP client for unit tests
-- **Response Factories**: Consistent test data generation
-- **Error Simulation**: Network and API error simulation
-- **State Management**: Track API calls and responses
+1. Create the rule class in `config/validation-rules.js`
+2. Add the chainable method in `config/validation-chain.js`
+3. Use it in validators via `validate('fieldName').newRule()`
 
-#### **Integration Testing**
-- **Real API Tests**: Live Gravity Forms integration
-- **Test Data Cleanup**: Automatic cleanup of test entries/forms
-- **Retry Logic**: Handle eventually consistent operations
-- **Environment Isolation**: Separate test vs production environments
+## Development
 
-#### **Test Utilities**
-- **Assertion Helpers**: Custom assertion functions
-- **Data Generators**: Create valid test forms/entries
-- **Wait Utilities**: Polling for async operations
-- **Parallel Execution**: Safe concurrent testing
-- **Test Isolation**: Proper setup/teardown per test
+### Setup
 
-## 🚀 Implementation Timeline
+```bash
+# Install dependencies
+npm install
 
-### Phase 1: Core Infrastructure
-1. **Project Setup**
-   - Initialize package.json with MCP SDK
-   - Configure ESM modules and dependencies
-   - Set up development scripts and tooling
+# Copy and configure environment
+cp .env.example .env
+# Edit .env with your Gravity Forms API credentials
 
-2. **Authentication System**
-   - OAuth 1.0a signature generation
-   - Basic authentication support
-   - Environment validation
-   - Connection testing
+# Verify environment
+npm run check-env
 
-3. **Base API Client**
-   - HTTP client with proper headers
-   - Request/response interceptors
-   - Error handling and retry logic
-   - Rate limiting support
+# Run in development with auto-reload
+npm run dev
 
-4. **Configuration Validation**
-   - Environment variable checking
-   - REST API availability test
-   - Capability verification
-   - Security enforcement
+# Debug with MCP Inspector
+npm run inspect
+```
 
-### Phase 2: Forms & Entries
-1. **Forms Management (6 tools)**
-   - List forms with filtering/pagination
-   - Get form with complete schema
-   - Create forms with validation
-   - Update forms preserving structure
-   - Delete forms with safety checks
-   - Form validation utilities
+### Required Environment
 
-2. **Entries Management (6 tools)**
-   - List entries with advanced search
-   - Get entry with field labels
-   - Create entries with validation
-   - Update entries preserving metadata
-   - Delete entries with confirmation
-   - Entry search with complex filters
+```
+GRAVITY_FORMS_CONSUMER_KEY=ck_...    # From WP Admin > Forms > Settings > REST API
+GRAVITY_FORMS_CONSUMER_SECRET=cs_... # Same location
+GRAVITY_FORMS_BASE_URL=https://...   # WordPress site URL (no trailing slash)
+```
 
-3. **Form Submissions (2 tools)**
-   - Complete submission workflow
-   - Validation-only submissions
-   - Multi-page form support
-   - File upload handling
+### Testing
 
-4. **Basic Test Coverage**
-   - Authentication tests
-   - Forms endpoint tests
-   - Entries endpoint tests
-   - Integration test framework
+```bash
+npm run test:unit      # Unit tests via custom runner
+npm run test:auth      # Authentication tests
+npm run test:forms     # Forms endpoint tests
+npm run test:entries   # Entries endpoint tests
+npm run test:feeds     # Feeds endpoint tests
+npm run test:tools     # Tool registration validation
+npm run test:all       # Run everything sequentially
+npm test               # Integration tests (requires live API)
+```
 
-### Phase 3: Advanced Features
-1. **Notifications (1 tool)**
-   - Send notifications for entries
-   - Event-based triggering
-   - Multiple notification support
+Tests use a custom runner (`src/tests/run.js`), not Jest/Mocha. Test helpers in `src/tests/helpers.js` provide mock data generators (`generateMockForm`, `generateMockEntry`, `generateMockFeed`).
 
-2. **Add-on Feeds (7 tools)**
-   - List feeds by addon/form
-   - Get specific feed details
-   - Create feeds for various addons
-   - Update full feed configuration
-   - Partial feed updates (PATCH)
-   - Delete feeds with validation
+For integration tests, set `GRAVITY_FORMS_TEST_*` env vars pointing to a test WordPress site. Test forms are prefixed with `TEST_` and auto-cleaned via `TestFormManager`.
 
-3. **Field Filters (1 tool)**
-   - Get form field filters
-   - Admin label support
-   - Filter metadata extraction
+### Building
 
-4. **Results/Analytics (1 tool)**
-   - Quiz results with scoring
-   - Poll results with statistics
-   - Survey results with analysis
+No build step — pure ESM JavaScript, runs directly with `node src/index.js`. Requires Node.js >= 18.
 
-### Phase 4: Testing & Polish
-1. **Comprehensive Test Suite**
-   - All endpoint test coverage
-   - Edge case testing
-   - Failure mode validation
-   - Performance testing
+## Gotchas
 
-2. **Error Handling Improvements**
-   - Detailed error messages
-   - Error code standardization
-   - Recovery mechanisms
-   - Logging and debugging
+1. **Fields are form properties, not separate endpoints.** The Gravity Forms REST API has no direct field CRUD endpoints. All field operations require fetching the entire form, modifying the fields array, then PUT-ing the whole form back. This is why `FieldManager` exists as a layer on top of `GravityFormsClient`. — `field-manager.js:31-56`
 
-3. **Documentation Completion**
-   - API coverage documentation
-   - Usage examples for each tool
-   - Authentication setup guide
-   - Troubleshooting guide
+2. **Stdout is reserved for JSON-RPC.** In MCP mode, ALL logging must go to stderr. Using `console.log` will corrupt the JSON-RPC transport. The `logger.js` utility handles this, but any new code must use `logger.info/error/warn` instead of `console.log`. — `utils/logger.js:14-32`
 
-4. **Performance Optimization**
-   - Request batching where possible
-   - Response caching strategies
-   - Connection pooling
-   - Memory usage optimization
+3. **Auth fallback is silent.** If Basic Auth fails because the site uses HTTP (not HTTPS), `AuthManager` silently falls back to OAuth 1.0a. Only warns in non-test mode. This can cause confusing auth failures if OAuth credentials aren't properly configured. — `config/auth.js:250-267`
 
-## 📋 Quality Standards
+4. **Update operations fetch-then-merge.** `updateForm`, `updateEntry`, and `updateFeed` all GET the existing resource first, merge updates, then PUT. This prevents data loss but means two HTTP calls per update. If the resource is modified between GET and PUT, the intermediate change is overwritten. — `gravity-forms-client.js:262-286`
 
-### Code Quality
-- **ESM Modules**: Modern JavaScript with proper imports
-- **Type Safety**: JSDoc annotations for better IDE support
-- **Error Handling**: Comprehensive try/catch with meaningful errors
-- **Input Validation**: Schema validation for all tool inputs
-- **Response Formatting**: Consistent MCP response structure
-- **Async/Await**: Proper async handling throughout
-- **Code Organization**: Clear separation of concerns
-- **Performance**: Efficient algorithms and minimal overhead
+5. **Field ID generation uses max+1.** If a field with ID 10 is deleted, the next field gets ID 11, not 10. IDs are never reused within a form. — `field-manager.js:173-182`
 
-### Testing Standards
-- **95%+ Test Coverage**: All tools and critical paths tested
-- **Integration Tests**: Real API validation with cleanup
-- **Edge Case Coverage**: Boundary conditions and special cases
-- **Failure Mode Validation**: All error paths tested
-- **Performance Tests**: Large dataset handling verified
-- **Isolation**: Each test independent and repeatable
-- **Documentation**: Clear test descriptions and expectations
+6. **Compound field sub-input IDs use dot notation.** Address field 5 has sub-inputs `5.1` (street), `5.2` (line 2), etc. These IDs are strings, not numbers. Entry data uses these dot-notation keys. — `field-manager.js:206-267`
 
-### Security Standards
-- **Credential Protection**: Never log sensitive information
-- **Input Sanitization**: Prevent injection attacks
-- **Delete Protection**: Safety switches for destructive operations
-- **Authentication**: Proper OAuth 1.0a implementation
-- **HTTPS Enforcement**: Secure transport required
-- **Rate Limiting**: Respect API limits and quotas
+7. **Delete operations are disabled by default.** `GRAVITY_FORMS_ALLOW_DELETE=true` must be explicitly set. Without it, `deleteForm`, `deleteEntry`, and `deleteFeed` throw immediately. This is intentional safety. — `gravity-forms-client.js:88, 292-294`
 
-### Documentation Standards
-- **Complete Coverage**: Every tool documented with examples
-- **Clear Instructions**: Step-by-step setup and usage
-- **Troubleshooting**: Common issues and solutions
-- **API Reference**: Complete parameter and response documentation
-- **Migration Guide**: Transition from direct REST API usage
+8. **The `mcp.json` manifest lists 24 tools, but there are actually 28.** The 4 field operation tools (`gf_add_field`, `gf_update_field`, `gf_delete_field`, `gf_list_field_types`) were added after the manifest was written. The `ListToolsRequestSchema` handler in `index.js` is the source of truth. — `mcp.json` vs `src/index.js:517`
 
-## 🎯 Achieved Success Criteria
+9. **Self-signed certs for local dev.** Set `MCP_ALLOW_SELF_SIGNED_CERTS=true` to bypass certificate validation for local WordPress environments (Laravel Valet, Local WP, etc.). Never enable in production. — `gravity-forms-client.js:31-33`
 
-### Functional Requirements
-1. **100% API Coverage**: Every REST API v2 endpoint implemented as MCP tool
-2. **24 MCP Tools**: All Gravity Forms functionality accessible via MCP
-3. **Authentication Support**: Both OAuth 1.0a and Basic auth working
-4. **File Upload Support**: Multipart form data handling for file fields
-5. **Advanced Filtering**: Complete search and filter capabilities
-6. **Batch Operations**: Efficient bulk operations where applicable
+10. **Validation has legacy and new patterns.** The validation system has a `BaseValidator` legacy layer wrapping newer `ValidationChain` and domain-specific validators. Both paths are active. New code should use the chain system in `validation-chain.js`. — `config/validation.js:21-260`
 
-### Quality Requirements
-1. **Comprehensive Testing**: Happy path, edge cases, and failure modes covered
-2. **Security Implementation**: OAuth 1.0a, delete protection, input validation
-3. **Error Handling**: Graceful failure with informative error messages
-4. **Performance**: Sub-second response times for typical operations
-5. **Reliability**: Proper retry logic and connection management
+## Related Resources
 
-### Integration Requirements
-1. **MCP SDK Integration**: Works with @modelcontextprotocol/sdk
-2. **Inspector Compatibility**: Debuggable with @modelcontextprotocol/inspector
-3. **Environment Flexibility**: Works in development and production environments
-4. **Version Compatibility**: Supports current Gravity Forms versions
-
-### Documentation Requirements
-1. **Complete Documentation**: All tools, parameters, and responses documented
-2. **Usage Examples**: Real-world examples for each feature
-3. **Setup Guide**: Clear installation and configuration instructions
-4. **API Coverage Map**: Visual representation of covered endpoints
-5. **Troubleshooting**: Common issues and their solutions
-
-## 📊 Project Metrics
-
-### Coverage Metrics
-- **API Endpoints Covered**: 15/15 (100%)
-- **MCP Tools Implemented**: 24/24 (100%)
-- **Authentication Methods**: 2/2 (OAuth 1.0a + Basic)
-- **Test Coverage**: >95% of code paths
-- **Documentation Coverage**: 100% of tools
-
-### Quality Metrics
-- **Test Pass Rate**: 100% on CI/CD
-- **Error Handling**: All failure modes tested
-- **Performance**: <1000ms for 95% of operations
-- **Security**: All security requirements met
-- **Usability**: Zero configuration required after environment setup
+- **CLAUDE.md** — Concise project identity and critical rules
+- **README.md** — User-facing setup and usage guide
+- **.env.example** — Complete environment variable reference
+- **mcp.json** — MCP manifest (tool catalog, auth requirements)
+- [Gravity Forms REST API v2 docs](https://docs.gravityforms.com/rest-api-v2/)
+- [MCP SDK docs](https://modelcontextprotocol.io)
