@@ -60,9 +60,16 @@ gravitymcp/
 │       ├── field-operations-e2e.test.js # Field operations E2E
 │       ├── field-operations-integration.test.js # Field ops integration
 │       └── sanitize.test.js            # Sanitization tests
-└── scripts/
-    ├── check-env.js          # Environment validation script
-    └── setup-test-data.js    # Test data seeding
+├── scripts/
+│   ├── check-env.js          # Environment validation script
+│   ├── setup-test-data.js    # Test data seeding
+│   ├── test-field-ops.js     # Field operations smoke test
+│   ├── test-server-output.js # Server output verification
+│   └── verify-field-tools.js # Field tool registration check
+└── .github/workflows/
+    ├── publish.yml           # npm publish workflow
+    ├── security.yml          # Security scanning
+    └── test.yml              # CI test runner
 ```
 
 ## Architecture
@@ -80,7 +87,7 @@ gravitymcp/
 
 ### Core Concepts
 
-**GravityFormsClient** (`gravity-forms-client.js`): Single class wrapping all API endpoints. Each method uses `validateAndCall(toolName, input, apiCall)` pattern — validates input via `ValidationFactory`, then executes the HTTP call. Update operations (forms, entries, feeds) fetch-then-merge to preserve existing data.
+**GravityFormsClient** (`gravity-forms-client.js`): Single class wrapping all API endpoints. Each method uses `validateAndCall(toolName, input, apiCall)` pattern — validates input via `ValidationFactory`, then executes the HTTP call. Update operations (forms, entries, feeds) fetch-then-merge to preserve existing data. Responses return minimal payloads — just the essential data without redundant metadata.
 
 **AuthManager** (`config/auth.js`): Selects between `BasicAuthHandler` (primary, requires HTTPS) and `OAuth1Handler` (fallback). Auto-falls-back to OAuth if HTTPS isn't available. Auth headers injected via axios request interceptor.
 
@@ -102,10 +109,19 @@ MCP Client → stdio → Server.CallToolRequestSchema handler
         → apiCall(validatedInput) → axios HTTP request
           → auth interceptor adds headers
           → response interceptor handles errors
-      → structured result object
-    → JSON.stringify → MCP content block
+      → minimal result object (no redundant fields)
+    → JSON.stringify(result) → compact MCP content block (no pretty-print)
   ← { content: [{ type: "text", text: "..." }] }
 ```
+
+### Token Optimization
+
+Responses are optimized for minimal token usage:
+
+- **Compact JSON**: `JSON.stringify(result)` — no pretty-printing (no `null, 2`) — `src/index.js:114`
+- **Minimal payloads**: No redundant `message`, `created`/`updated` booleans, or echo-back of input IDs. GET methods return `{ resource: data }`, mutations return only what can't be inferred (e.g., delete returns `{ deleted: true, id, permanently }`)
+- **Summary/detail modes**: `gf_list_field_types` defaults to summary mode (`type`, `label`, `category` only). Pass `detail=true` for full metadata (supports, storage, validation, icon). Pass `include_variants=true` with `detail=true` for variant data.
+- **Concise tool descriptions**: All 28 tool descriptions and property descriptions are terse to reduce tool-list overhead
 
 ### Tool Categories
 
@@ -118,6 +134,27 @@ MCP Client → stdio → Server.CallToolRequestSchema handler
 | Feeds | `gf_list_feeds`, `gf_get_feed`, `gf_list_form_feeds`, `gf_create_feed`, `gf_update_feed`, `gf_patch_feed`, `gf_delete_feed` | `listFeeds`, `getFeed`, `listFormFeeds`, `createFeed`, `updateFeed`, `patchFeed`, `deleteFeed` |
 | Utilities | `gf_get_field_filters`, `gf_get_results` | `getFieldFilters`, `getResults` |
 | Field Ops | `gf_add_field`, `gf_update_field`, `gf_delete_field`, `gf_list_field_types` | Handled via `fieldOperationHandlers` → `FieldManager` |
+
+### Response Shapes
+
+GET/list methods return just the data:
+```javascript
+{ form: responseData }              // gf_get_form
+{ forms: responseData, total_count, total_pages }  // gf_list_forms
+{ entries: responseData, total_count }              // gf_list_entries
+{ entry: responseData }             // gf_get_entry
+{ feed: responseData }              // gf_get_feed, gf_create_feed, gf_update_feed, gf_patch_feed
+{ feeds: responseData }             // gf_list_feeds, gf_list_form_feeds
+```
+
+Mutation methods return minimal confirmation:
+```javascript
+{ deleted: true, form_id, permanently }  // gf_delete_form, gf_delete_entry
+{ deleted: true, feed_id }               // gf_delete_feed
+{ valid: true/false, validation_messages }  // gf_validate_form, gf_validate_submission
+{ success: true/false, entry_id, confirmation_message, validation_messages }  // gf_submit_form_data
+{ sent: true, notifications_sent }       // gf_send_notifications
+```
 
 ## Conventions
 
@@ -148,10 +185,8 @@ Every `GravityFormsClient` method follows this pattern:
 ```javascript
 async methodName(params) {
   return this.validateAndCall('tool_name', params, async (validated) => {
-    // HTTP call with validated input
     const response = await this.httpClient.get/post/put/delete(path, data);
-    // Return structured result
-    return { resource: response.data, metadata... };
+    return { resource: response.data };  // Minimal return — no redundant fields
   });
 }
 ```
@@ -175,21 +210,21 @@ All delete operations (`deleteForm`, `deleteEntry`, `deleteFeed`) check `this.al
 
 ### Adding a New Tool
 
-1. **Define the tool schema** in `src/index.js` inside the `ListToolsRequestSchema` handler (`:131-519`). Add to the tools array:
+1. **Define the tool schema** in `src/index.js` inside the `ListToolsRequestSchema` handler (`:131-519`). Add to the tools array with concise descriptions:
    ```javascript
    {
      name: 'gf_new_tool',
-     description: 'Description',
+     description: 'Short description',  // Keep terse for token efficiency
      inputSchema: { type: 'object', properties: {...}, required: [...] }
    }
    ```
 
-2. **Add the client method** in `gravity-forms-client.js` using `validateAndCall`:
+2. **Add the client method** in `gravity-forms-client.js` using `validateAndCall`. Return minimal data:
    ```javascript
    async newToolMethod(params) {
      return this.validateAndCall('gf_new_tool', params, async (validated) => {
        const response = await this.httpClient.get('/endpoint');
-       return { data: response.data };
+       return { data: response.data };  // No message, no echo-back IDs
      });
    }
    ```
@@ -238,21 +273,11 @@ For compound fields (multi-input like address/name), set `storage.type: 'compoun
 ### Setup
 
 ```bash
-# Install dependencies
 npm install
-
-# Copy and configure environment
-cp .env.example .env
-# Edit .env with your Gravity Forms API credentials
-
-# Verify environment
-npm run check-env
-
-# Run in development with auto-reload
-npm run dev
-
-# Debug with MCP Inspector
-npm run inspect
+cp .env.example .env   # Edit with your Gravity Forms API credentials
+npm run check-env      # Verify environment
+npm run dev            # Dev with auto-reload
+npm run inspect        # Debug with MCP Inspector
 ```
 
 ### Required Environment
@@ -292,7 +317,7 @@ No build step — pure ESM JavaScript, runs directly with `node src/index.js`. R
 
 3. **Auth fallback is silent.** If Basic Auth fails because the site uses HTTP (not HTTPS), `AuthManager` silently falls back to OAuth 1.0a. Only warns in non-test mode. This can cause confusing auth failures if OAuth credentials aren't properly configured. — `config/auth.js:250-267`
 
-4. **Update operations fetch-then-merge.** `updateForm`, `updateEntry`, and `updateFeed` all GET the existing resource first, merge updates, then PUT. This prevents data loss but means two HTTP calls per update. If the resource is modified between GET and PUT, the intermediate change is overwritten. — `gravity-forms-client.js:262-286`
+4. **Update operations fetch-then-merge.** `updateForm`, `updateEntry`, and `updateFeed` all GET the existing resource first, merge updates, then PUT. This prevents data loss but means two HTTP calls per update. If the resource is modified between GET and PUT, the intermediate change is overwritten. — `gravity-forms-client.js:262-278`
 
 5. **Field ID generation uses max+1.** If a field with ID 10 is deleted, the next field gets ID 11, not 10. IDs are never reused within a form. — `field-manager.js:173-182`
 
@@ -305,6 +330,8 @@ No build step — pure ESM JavaScript, runs directly with `node src/index.js`. R
 9. **Self-signed certs for local dev.** Set `MCP_ALLOW_SELF_SIGNED_CERTS=true` to bypass certificate validation for local WordPress environments (Laravel Valet, Local WP, etc.). Never enable in production. — `gravity-forms-client.js:31-33`
 
 10. **Validation has legacy and new patterns.** The validation system has a `BaseValidator` legacy layer wrapping newer `ValidationChain` and domain-specific validators. Both paths are active. New code should use the chain system in `validation-chain.js`. — `config/validation.js:21-260`
+
+11. **`gf_list_field_types` defaults to summary mode.** Returns only `type`, `label`, `category` per field type. Pass `detail=true` for full metadata (supports, storage, validation). Pass `include_variants=true` with `detail=true` for variant data. This prevents accidentally dumping thousands of tokens for all 44 field types. — `field-operations/index.js:142-211`
 
 ## Related Resources
 

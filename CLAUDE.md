@@ -33,3 +33,5 @@ Required env vars (see `.env.example` for full list):
 3. **Delete operations require `GRAVITY_FORMS_ALLOW_DELETE=true`** env var
 4. **Fields are form properties** — no direct field endpoints; modify via form PUT
 5. **Update operations fetch-then-merge** — always GET existing data first to avoid data loss
+6. **Minimize response tokens** — no pretty-print (`JSON.stringify(result)` not `null, 2`), no redundant `message` strings, no echo-back of input IDs, no `created`/`updated` booleans. Return only essential data.
+7. **Keep tool descriptions terse** — every token in tool schemas is sent on every `tools/list` call
