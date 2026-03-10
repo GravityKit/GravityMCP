@@ -51,7 +51,6 @@ suite.test('Submit Form: Should submit form successfully', async () => {
   TestAssert.isTrue(result.success);
   TestAssert.equal(result.entry_id, 500);
   TestAssert.includes(result.confirmation_message, 'Thank you');
-  TestAssert.equal(result.message, 'Form submitted successfully');
 });
 
 suite.test('Submit Form: Should handle validation errors', async () => {
@@ -70,7 +69,6 @@ suite.test('Submit Form: Should handle validation errors', async () => {
 
   TestAssert.isFalse(result.success);
   TestAssert.equal(result.validation_messages['1'], 'Name is required');
-  TestAssert.equal(result.message, 'Submission failed validation');
 });
 
 suite.test('Submit Form: Should include field values', async () => {
@@ -179,7 +177,6 @@ suite.test('Validate Submission: Should validate without processing', async () =
   });
 
   TestAssert.isTrue(result.valid);
-  TestAssert.equal(result.message, 'Submission data is valid');
 });
 
 suite.test('Validate Submission: Should return field-specific errors', async () => {
@@ -205,7 +202,6 @@ suite.test('Validate Submission: Should return field-specific errors', async () 
   TestAssert.isFalse(result.valid);
   TestAssert.lengthOf(result.field_errors, 2);
   TestAssert.equal(result.field_errors[0].field_id, '2');
-  TestAssert.equal(result.message, 'Validation errors found');
 });
 
 suite.test('Validate Submission: Should validate required fields', async () => {
@@ -263,9 +259,7 @@ suite.test('Send Notifications: Should send all notifications for entry', async 
   });
 
   TestAssert.isTrue(result.sent);
-  TestAssert.equal(result.entry_id, 100);
   TestAssert.lengthOf(result.notifications_sent, 2);
-  TestAssert.equal(result.message, 'Notifications sent successfully');
 });
 
 suite.test('Send Notifications: Should send specific notifications', async () => {

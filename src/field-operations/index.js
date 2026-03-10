@@ -140,72 +140,85 @@ export const fieldOperationHandlers = {
    * List available field types
    */
   async gf_list_field_types(params, { fieldRegistry }) {
-    const { category, feature, search, include_variants = false } = params;
+    const { category, feature, search, detail = false, include_variants = false } = params;
 
     try {
-      const allTypes = Object.entries(fieldRegistry).map(([type, def]) => ({
-        type,
-        label: def.label,
-        category: def.category,
-        description: def.description,
-        icon: def.icon,
-        supports: {
-          required: def.supportsRequired || false,
-          conditional: def.supportsConditional || false,
-          duplicate: def.supportsDuplicate || false,
-          prepopulate: def.supportsPrepopulate || false,
-          visibility: def.supportsVisibility || false,
-          description: def.supportsDescription || false,
-          validation: def.supportsValidation || false,
-          css_class: def.supportsCssClass || false
-        },
-        variants: include_variants && def.variants ?
-          Object.entries(def.variants).map(([name, variant]) => ({
-            name,
-            label: variant.label,
-            description: variant.description,
-            settings: variant.settings
-          })) : undefined,
-        storage: def.storage,
-        validation: def.validation
-      }));
-
-      // Apply filters
-      let filteredTypes = allTypes;
+      // Apply filters first on raw registry to avoid unnecessary mapping
+      let entries = Object.entries(fieldRegistry);
 
       if (category) {
-        filteredTypes = filteredTypes.filter(t => t.category === category);
-      }
-
-      if (feature) {
-        filteredTypes = filteredTypes.filter(t => t.supports[feature] === true);
+        entries = entries.filter(([, def]) => def.category === category);
       }
 
       if (search) {
         const searchLower = search.toLowerCase();
-        filteredTypes = filteredTypes.filter(t =>
-          t.type.toLowerCase().includes(searchLower) ||
-          t.label.toLowerCase().includes(searchLower) ||
-          (t.description && t.description.toLowerCase().includes(searchLower))
+        entries = entries.filter(([type, def]) =>
+          type.toLowerCase().includes(searchLower) ||
+          def.label.toLowerCase().includes(searchLower) ||
+          (def.description && def.description.toLowerCase().includes(searchLower))
         );
       }
 
-      // Get unique categories
-      const categories = [...new Set(allTypes.map(t => t.category))].filter(Boolean);
+      if (feature) {
+        const featureMap = {
+          required: 'supportsRequired',
+          conditional: 'supportsConditional',
+          duplicate: 'supportsDuplicate',
+          prepopulate: 'supportsPrepopulate',
+          visibility: 'supportsVisibility',
+          description: 'supportsDescription',
+          validation: 'supportsValidation',
+          css_class: 'supportsCssClass'
+        };
+        const key = featureMap[feature] || feature;
+        entries = entries.filter(([, def]) => def[key] === true);
+      }
+
+      // Map to output format based on mode
+      let fieldTypes;
+      if (detail) {
+        fieldTypes = entries.map(([type, def]) => ({
+          type,
+          label: def.label,
+          category: def.category,
+          description: def.description,
+          icon: def.icon,
+          supports: {
+            required: def.supportsRequired || false,
+            conditional: def.supportsConditional || false,
+            duplicate: def.supportsDuplicate || false,
+            prepopulate: def.supportsPrepopulate || false,
+            visibility: def.supportsVisibility || false,
+            description: def.supportsDescription || false,
+            validation: def.supportsValidation || false,
+            css_class: def.supportsCssClass || false
+          },
+          variants: include_variants && def.variants ?
+            Object.entries(def.variants).map(([name, variant]) => ({
+              name,
+              label: variant.label,
+              description: variant.description,
+              settings: variant.settings
+            })) : undefined,
+          storage: def.storage,
+          validation: def.validation
+        }));
+      } else {
+        // Summary mode (default) — minimal tokens
+        fieldTypes = entries.map(([type, def]) => ({
+          type,
+          label: def.label,
+          category: def.category
+        }));
+      }
 
       return {
-        success: true,
-        field_types: filteredTypes,
-        total: filteredTypes.length,
-        categories
+        field_types: fieldTypes,
+        total: fieldTypes.length
       };
     } catch (error) {
       return {
-        success: false,
-        error: error.message,
-        field_types: [],
-        total: 0,
-        categories: []
+        error: error.message
       };
     }
   }
@@ -217,62 +230,44 @@ export const fieldOperationHandlers = {
 export const fieldOperationTools = [
   {
     name: 'gf_add_field',
-    description: 'Add a new field to a Gravity Form with intelligent defaults and positioning',
+    description: 'Add a field to a form',
     inputSchema: {
       type: 'object',
       properties: {
         form_id: {
           type: 'number',
-          description: 'The ID of the form to add the field to'
+          description: 'Form ID'
         },
         field_type: {
           type: 'string',
-          description: 'The type of field to add (e.g., text, email, address)'
+          description: 'Field type (text, email, address, etc.)'
         },
         properties: {
           type: 'object',
-          description: 'Field properties and settings',
+          description: 'Field properties',
           properties: {
-            label: { type: 'string', description: 'Field label' },
-            description: { type: 'string', description: 'Field description' },
-            isRequired: { type: 'boolean', description: 'Whether field is required' },
-            placeholder: { type: 'string', description: 'Placeholder text' },
-            defaultValue: { type: 'string', description: 'Default value' },
-            cssClass: { type: 'string', description: 'CSS class names' },
-            size: {
-              type: 'string',
-              enum: ['small', 'medium', 'large'],
-              description: 'Field size'
-            },
-            visibility: {
-              type: 'string',
-              enum: ['visible', 'hidden', 'administrative'],
-              description: 'Field visibility'
-            }
+            label: { type: 'string' },
+            description: { type: 'string' },
+            isRequired: { type: 'boolean' },
+            placeholder: { type: 'string' },
+            defaultValue: { type: 'string' },
+            cssClass: { type: 'string' },
+            size: { type: 'string', enum: ['small', 'medium', 'large'] },
+            visibility: { type: 'string', enum: ['visible', 'hidden', 'administrative'] }
           }
         },
         position: {
           type: 'object',
-          description: 'Field positioning configuration',
+          description: 'Field positioning',
           properties: {
-            mode: {
-              type: 'string',
-              enum: ['append', 'prepend', 'after', 'before', 'index'],
-              description: 'Positioning mode'
-            },
-            reference: {
-              type: 'number',
-              description: 'Reference field ID (for after/before) or index'
-            },
-            page: {
-              type: 'number',
-              description: 'Page number for multi-page forms'
-            }
+            mode: { type: 'string', enum: ['append', 'prepend', 'after', 'before', 'index'] },
+            reference: { type: 'number', description: 'Reference field ID or index' },
+            page: { type: 'number', description: 'Page number' }
           }
         },
         test_mode: {
           type: 'boolean',
-          description: 'Use test configuration',
+          description: 'Test mode',
           default: false
         }
       },
@@ -281,30 +276,30 @@ export const fieldOperationTools = [
   },
   {
     name: 'gf_update_field',
-    description: 'Update an existing field in a Gravity Form',
+    description: 'Update a field in a form',
     inputSchema: {
       type: 'object',
       properties: {
         form_id: {
           type: 'number',
-          description: 'The ID of the form containing the field'
+          description: 'Form ID'
         },
         field_id: {
           type: 'number',
-          description: 'The ID of the field to update'
+          description: 'Field ID'
         },
         properties: {
           type: 'object',
-          description: 'Field properties to update'
+          description: 'Properties to update'
         },
         force: {
           type: 'boolean',
-          description: 'Force update even if there are dependencies',
+          description: 'Force update despite dependencies',
           default: false
         },
         test_mode: {
           type: 'boolean',
-          description: 'Use test configuration',
+          description: 'Test mode',
           default: false
         }
       },
@@ -313,31 +308,31 @@ export const fieldOperationTools = [
   },
   {
     name: 'gf_delete_field',
-    description: 'Delete a field from a Gravity Form with dependency checking',
+    description: 'Delete a field (checks dependencies)',
     inputSchema: {
       type: 'object',
       properties: {
         form_id: {
           type: 'number',
-          description: 'The ID of the form containing the field'
+          description: 'Form ID'
         },
         field_id: {
           type: 'number',
-          description: 'The ID of the field to delete'
+          description: 'Field ID'
         },
         cascade: {
           type: 'boolean',
-          description: 'Automatically clean up dependencies',
+          description: 'Clean up dependencies',
           default: false
         },
         force: {
           type: 'boolean',
-          description: 'Force deletion despite dependencies',
+          description: 'Force delete',
           default: false
         },
         test_mode: {
           type: 'boolean',
-          description: 'Use test configuration',
+          description: 'Test mode',
           default: false
         }
       },
@@ -346,7 +341,7 @@ export const fieldOperationTools = [
   },
   {
     name: 'gf_list_field_types',
-    description: 'List all available Gravity Forms field types with their capabilities',
+    description: 'List available field types. Returns type/label/category by default; use detail=true for full metadata.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -356,15 +351,20 @@ export const fieldOperationTools = [
         },
         feature: {
           type: 'string',
-          description: 'Filter by feature support (required, conditional, duplicate)'
+          description: 'Filter by feature (required, conditional, duplicate, prepopulate, visibility)'
         },
         search: {
           type: 'string',
-          description: 'Search in field type names and labels'
+          description: 'Search field type names/labels'
+        },
+        detail: {
+          type: 'boolean',
+          description: 'Return full metadata (supports, storage, validation, icon)',
+          default: false
         },
         include_variants: {
           type: 'boolean',
-          description: 'Include field variants in response',
+          description: 'Include field variants (requires detail=true)',
           default: false
         }
       }

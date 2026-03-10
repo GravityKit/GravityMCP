@@ -347,31 +347,32 @@ suite.test('Coverage: Should have complete CRUD operations where applicable', ()
 
 suite.test('Descriptions: All tools should have clear descriptions', () => {
   const toolDescriptions = {
-    'gf_list_forms': 'List all forms (returns all forms as object keyed by ID)',
-    'gf_get_form': 'Get a specific form by ID with complete schema',
-    'gf_create_form': 'Create a new form with fields and settings',
-    'gf_update_form': 'Update an existing form',
-    'gf_delete_form': 'Delete or trash a form (requires ALLOW_DELETE=true)',
-    'gf_validate_form': 'Validate form submission data'
+    'gf_list_forms': 'List all forms',
+    'gf_get_form': 'Get a form by ID',
+    'gf_create_form': 'Create a new form',
+    'gf_update_form': 'Update a form',
+    'gf_delete_form': 'Delete a form (requires ALLOW_DELETE=true)',
+    'gf_validate_form': 'Validate form data',
+    'gf_submit_form_data': 'Submit form data (triggers notifications, confirmations, payment)'
   };
 
   Object.keys(toolDescriptions).forEach(tool => {
-    TestAssert.isTrue(toolDescriptions[tool].length > 10, `${tool} should have meaningful description`);
+    TestAssert.isTrue(toolDescriptions[tool].length > 5, `${tool} should have meaningful description`);
   });
 
-  // Verify list_forms description clarifies the object response format
+  // Verify submit description clarifies the full processing pipeline
   TestAssert.includes(
-    toolDescriptions['gf_list_forms'],
-    'object keyed by ID',
-    'gf_list_forms description should clarify object response format'
+    toolDescriptions['gf_submit_form_data'],
+    'triggers notifications',
+    'gf_submit_form_data description should clarify it triggers the full pipeline'
   );
 });
 
 suite.test('Descriptions: Delete tools should mention permission requirement', () => {
   const deleteDescriptions = {
-    'gf_delete_form': 'Delete or trash a form (requires ALLOW_DELETE=true)',
-    'gf_delete_entry': 'Delete or trash an entry (requires ALLOW_DELETE=true)',
-    'gf_delete_feed': 'Delete an add-on feed'
+    'gf_delete_form': 'Delete a form (requires ALLOW_DELETE=true)',
+    'gf_delete_entry': 'Delete an entry (requires ALLOW_DELETE=true)',
+    'gf_delete_feed': 'Delete a feed'
   };
 
   TestAssert.includes(deleteDescriptions['gf_delete_form'], 'ALLOW_DELETE');

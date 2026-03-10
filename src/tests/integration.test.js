@@ -164,7 +164,7 @@ suite.test('Integration: Create test form', async () => {
 
   const result = await client.createForm(formData);
 
-  TestAssert.isTrue(result.created, 'Form should be created');
+  TestAssert.isNotNull(result.form, 'Form should be created');
   TestAssert.isNotNull(result.form.id, 'Should return form ID');
 
   testFormId = result.form.id;
@@ -206,7 +206,7 @@ suite.test('Integration: Update test form', async () => {
 
   const result = await client.updateForm(updates);
 
-  TestAssert.isTrue(result.updated, 'Form should be updated');
+  TestAssert.isNotNull(result.form, 'Form should be updated');
   TestAssert.equal(result.form.description, updates.description,
     'Description should be updated');
 });
@@ -225,7 +225,7 @@ suite.test('Integration: Create test entry', async () => {
 
   const result = await client.createEntry(entryData);
 
-  TestAssert.isTrue(result.created, 'Entry should be created');
+  TestAssert.isNotNull(result.entry, 'Entry should be created');
   TestAssert.isNotNull(result.entry.id, 'Should return entry ID');
 
   testEntryId = result.entry.id;
@@ -268,7 +268,7 @@ suite.test('Integration: Update test entry', async () => {
 
   const result = await client.updateEntry(updates);
 
-  TestAssert.isTrue(result.updated, 'Entry should be updated');
+  TestAssert.isNotNull(result.entry, 'Entry should be updated');
   TestAssert.equal(result.entry['3'], updates['3'], 'Message should be updated');
 });
 
@@ -403,7 +403,7 @@ suite.test('Integration: Create test feed (if MailChimp available)', async () =>
 
   const result = await client.createFeed(feedData);
 
-  TestAssert.isTrue(result.created, 'Feed should be created');
+  TestAssert.isNotNull(result.feed, 'Feed should be created');
   TestAssert.isNotNull(result.feed.id, 'Should return feed ID');
 
   testFeedId = result.feed.id;

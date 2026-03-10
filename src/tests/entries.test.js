@@ -101,9 +101,7 @@ suite.test('List Entries: Should handle complex search with field filters', asyn
 
   const result = await client.listEntries({ search });
 
-  TestAssert.isNotNull(result.search_criteria);
-  TestAssert.equal(result.search_criteria.mode, 'all');
-  TestAssert.lengthOf(result.search_criteria.field_filters, 2);
+  TestAssert.lengthOf(result.entries, 1);
 });
 
 suite.test('List Entries: Should handle sorting', async () => {
@@ -115,8 +113,7 @@ suite.test('List Entries: Should handle sorting', async () => {
 
   const result = await client.listEntries({ sorting });
 
-  TestAssert.isNotNull(result.sorting);
-  TestAssert.equal(result.sorting.direction, 'desc');
+  TestAssert.lengthOf(result.entries, 1);
 });
 
 suite.test('List Entries: Should handle paging parameters', async () => {
@@ -160,8 +157,8 @@ suite.test('Get Entry: Should get specific entry by ID', async () => {
   const result = await client.getEntry({ id: 123 });
 
   TestAssert.equal(result.entry.id, 123);
-  TestAssert.equal(result.form_id, 1);
-  TestAssert.equal(result.status, 'active');
+  TestAssert.equal(result.entry.form_id, 1);
+  TestAssert.equal(result.entry.status, 'active');
 });
 
 suite.test('Get Entry: Should handle entry with file uploads', async () => {
@@ -228,9 +225,7 @@ suite.test('Create Entry: Should create new entry with field values', async () =
     created_by: 1
   });
 
-  TestAssert.isTrue(result.created);
   TestAssert.equal(result.entry.id, 500);
-  TestAssert.equal(result.message, 'Entry created successfully');
 });
 
 suite.test('Create Entry: Should require form_id', async () => {
@@ -275,7 +270,6 @@ suite.test('Create Entry: Should handle complex field types', async () => {
 
   const result = await client.createEntry(complexEntry);
 
-  TestAssert.isTrue(result.created);
   TestAssert.equal(result.entry['1.3'], 'First Name');
 });
 
@@ -312,9 +306,7 @@ suite.test('Update Entry: Should update existing entry', async () => {
     status: 'spam'
   });
 
-  TestAssert.isTrue(result.updated);
   TestAssert.equal(result.entry['1'], 'Updated Name');
-  TestAssert.equal(result.message, 'Entry updated successfully');
 });
 
 suite.test('Update Entry: Should preserve all field data when updating single field', async () => {
@@ -356,7 +348,6 @@ suite.test('Update Entry: Should preserve all field data when updating single fi
   TestAssert.equal(putRequest.config.data['3'], '25', 'Field 3 should be preserved');
   TestAssert.equal(putRequest.config.data.is_starred, '1', 'is_starred should be updated');
 
-  TestAssert.isTrue(result.updated);
   TestAssert.equal(result.entry['1'], 'John Doe', 'Original field data preserved in response');
   TestAssert.equal(result.entry.is_starred, '1', 'Updated field changed in response');
 });
@@ -401,7 +392,6 @@ suite.test('Delete Entry: Should trash entry by default', async () => {
 
   TestAssert.isTrue(result.deleted);
   TestAssert.isFalse(result.permanently);
-  TestAssert.equal(result.message, 'Entry moved to trash');
 });
 
 suite.test('Delete Entry: Should permanently delete with force=true', async () => {
@@ -411,7 +401,6 @@ suite.test('Delete Entry: Should permanently delete with force=true', async () =
 
   TestAssert.isTrue(result.deleted);
   TestAssert.isTrue(result.permanently);
-  TestAssert.equal(result.message, 'Entry permanently deleted');
 });
 
 suite.test('Delete Entry: Should require ALLOW_DELETE=true', async () => {
@@ -457,7 +446,7 @@ suite.test('Edge Case: Should handle date boundary searches', async () => {
 
   const result = await client.listEntries({ search });
 
-  TestAssert.isNotNull(result.search_criteria);
+  TestAssert.isNotNull(result.entries);
 });
 
 suite.test('Edge Case: Should handle multi-page form entries', async () => {

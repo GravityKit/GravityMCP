@@ -94,8 +94,8 @@ suite.test('Get Form: Should get specific form by ID', async () => {
 
   TestAssert.equal(result.form.id, 123);
   TestAssert.equal(result.form.title, mockForm.title);
-  TestAssert.equal(result.field_count, 3);
-  TestAssert.isTrue(result.is_active);
+  TestAssert.equal(result.form.fields.length, 3);
+  TestAssert.isTrue(result.form.is_active);
 });
 
 suite.test('Get Form: Should handle form with no fields', async () => {
@@ -105,7 +105,7 @@ suite.test('Get Form: Should handle form with no fields', async () => {
 
   const result = await client.getForm({ id: 1 });
 
-  TestAssert.equal(result.field_count, 0);
+  TestAssert.equal(result.form.fields.length, 0);
 });
 
 suite.test('Get Form: Should handle large forms (100+ fields)', async () => {
@@ -121,7 +121,7 @@ suite.test('Get Form: Should handle large forms (100+ fields)', async () => {
 
   const result = await client.getForm({ id: 1 });
 
-  TestAssert.equal(result.field_count, 150);
+  TestAssert.equal(result.form.fields.length, 150);
 });
 
 suite.test('Get Form: Should handle non-existent form (404)', async () => {
@@ -160,9 +160,7 @@ suite.test('Create Form: Should create new form with fields', async () => {
     fields: newForm.fields
   });
 
-  TestAssert.isTrue(result.created);
   TestAssert.equal(result.form.id, 5);
-  TestAssert.equal(result.message, 'Form created successfully');
 });
 
 suite.test('Create Form: Should require title', async () => {
@@ -210,7 +208,6 @@ suite.test('Create Form: Should create form with complex conditional logic', asy
 
   const result = await client.createForm(complexForm);
 
-  TestAssert.isTrue(result.created);
   TestAssert.equal(result.form.fields[1].conditionalLogic.rules[0].fieldId, 1);
 });
 
@@ -231,7 +228,6 @@ suite.test('Create Form: Should handle multi-page forms', async () => {
 
   const result = await client.createForm(multiPageForm);
 
-  TestAssert.isTrue(result.created);
   TestAssert.equal(result.form.fields.length, 3);
 });
 
@@ -251,7 +247,6 @@ suite.test('Create Form: Should handle unicode and special characters', async ()
 
   const result = await client.createForm(unicodeForm);
 
-  TestAssert.isTrue(result.created);
   TestAssert.equal(result.form.title, unicodeForm.title);
 });
 
@@ -274,7 +269,6 @@ suite.test('Create Form: Should handle unknown field type gracefully', async () 
 
   const result = await client.createForm(invalidForm);
 
-  TestAssert.isTrue(result.created);
   TestAssert.equal(result.form.fields[0]._unknown, true);
 });
 
@@ -313,9 +307,7 @@ suite.test('Update Form: Should update existing form', async () => {
     title: 'Updated Title'
   });
 
-  TestAssert.isTrue(result.updated);
   TestAssert.equal(result.form.title, 'Updated Title');
-  TestAssert.equal(result.message, 'Form updated successfully');
 });
 
 suite.test('Update Form: Should preserve all form data when updating single property', async () => {
@@ -386,7 +378,6 @@ suite.test('Update Form: Should preserve all form data when updating single prop
   TestAssert.exists(putRequest.config.data.confirmations, 'Confirmations should be preserved');
   TestAssert.equal(putRequest.config.data.is_active, false, 'is_active should be updated');
 
-  TestAssert.isTrue(result.updated);
   TestAssert.equal(result.form.is_active, false, 'Updated property changed');
 });
 
@@ -422,7 +413,6 @@ suite.test('Delete Form: Should trash form by default', async () => {
 
   TestAssert.isTrue(result.deleted);
   TestAssert.isFalse(result.permanently);
-  TestAssert.equal(result.message, 'Form moved to trash');
 });
 
 suite.test('Delete Form: Should permanently delete with force=true', async () => {
@@ -432,7 +422,6 @@ suite.test('Delete Form: Should permanently delete with force=true', async () =>
 
   TestAssert.isTrue(result.deleted);
   TestAssert.isTrue(result.permanently);
-  TestAssert.equal(result.message, 'Form permanently deleted');
 });
 
 suite.test('Delete Form: Should require ALLOW_DELETE=true', async () => {
@@ -470,7 +459,6 @@ suite.test('Validate Form: Should validate form submission data', async () => {
   });
 
   TestAssert.isTrue(result.valid);
-  TestAssert.equal(result.message, 'Form data is valid');
 });
 
 suite.test('Validate Form: Should return validation errors', async () => {
@@ -489,7 +477,6 @@ suite.test('Validate Form: Should return validation errors', async () => {
 
   TestAssert.isFalse(result.valid);
   TestAssert.equal(result.validation_messages['2'], 'Email is required');
-  TestAssert.equal(result.message, 'Validation errors found');
 });
 
 suite.test('Validate Form: Should require form_id', async () => {
@@ -533,7 +520,7 @@ suite.test('Edge Case: Should handle forms with all field types', async () => {
 
   const result = await client.getForm({ id: 1 });
 
-  TestAssert.equal(result.field_count, 18);
+  TestAssert.equal(result.form.fields.length, 18);
   TestAssert.equal(result.form.fields[17].type, 'fileupload');
 });
 

@@ -111,7 +111,7 @@ function wrapHandler(handler) {
         content: [
           {
             type: "text",
-            text: JSON.stringify(result, null, 2)
+            text: JSON.stringify(result)
           }
         ]
       };
@@ -134,21 +134,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // Forms Management (6 tools)
       {
         name: 'gf_list_forms',
-        description: 'List all forms (returns all forms as object keyed by ID)',
+        description: 'List all forms',
         inputSchema: {
           type: 'object',
           properties: {
             include: {
               type: 'array',
               items: { type: 'number' },
-              description: 'Array of form IDs to include (returns full form details)'
+              description: 'Form IDs to include'
             }
           }
         }
       },
       {
         name: 'gf_get_form',
-        description: 'Get a specific form by ID with complete schema',
+        description: 'Get a form by ID',
         inputSchema: {
           type: 'object',
           properties: {
@@ -159,7 +159,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'gf_create_form',
-        description: 'Create a new form with fields and settings',
+        description: 'Create a new form',
         inputSchema: {
           type: 'object',
           properties: {
@@ -173,14 +173,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             button: { type: 'object', description: 'Submit button settings' },
             confirmations: { type: 'object', description: 'Confirmation settings' },
             notifications: { type: 'object', description: 'Notification settings' },
-            is_active: { type: 'boolean', description: 'Whether form is active' }
+            is_active: { type: 'boolean', description: 'Form active state' }
           },
           required: ['title']
         }
       },
       {
         name: 'gf_update_form',
-        description: 'Update an existing form',
+        description: 'Update a form',
         inputSchema: {
           type: 'object',
           properties: {
@@ -195,26 +195,26 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             button: { type: 'object', description: 'Submit button settings' },
             confirmations: { type: 'object', description: 'Confirmation settings' },
             notifications: { type: 'object', description: 'Notification settings' },
-            is_active: { type: 'boolean', description: 'Whether form is active' }
+            is_active: { type: 'boolean', description: 'Form active state' }
           },
           required: ['id']
         }
       },
       {
         name: 'gf_delete_form',
-        description: 'Delete or trash a form (requires ALLOW_DELETE=true)',
+        description: 'Delete a form (requires ALLOW_DELETE=true)',
         inputSchema: {
           type: 'object',
           properties: {
             id: { type: 'number', description: 'Form ID' },
-            force: { type: 'boolean', description: 'Permanently delete if true, trash if false' }
+            force: { type: 'boolean', description: 'Permanent delete (vs trash)' }
           },
           required: ['id']
         }
       },
       {
         name: 'gf_validate_form',
-        description: 'Validate form submission data',
+        description: 'Validate form data',
         inputSchema: {
           type: 'object',
           properties: {
@@ -228,29 +228,29 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // Entries Management (6 tools)
       {
         name: 'gf_list_entries',
-        description: 'Search and list entries with advanced filtering',
+        description: 'List/search entries with filtering',
         inputSchema: {
           type: 'object',
           properties: {
             form_ids: {
               type: 'array',
               items: { type: 'number' },
-              description: 'Array of form IDs to filter entries'
+              description: 'Filter by form IDs'
             },
             include: {
               type: 'array',
               items: { type: 'number' },
-              description: 'Array of entry IDs to include'
+              description: 'Entry IDs to include'
             },
             exclude: {
               type: 'array',
               items: { type: 'number' },
-              description: 'Array of entry IDs to exclude'
+              description: 'Entry IDs to exclude'
             },
             status: {
               type: 'string',
               enum: ['active', 'spam', 'trash'],
-              description: 'Filter by entry status'
+              description: 'Entry status'
             },
             search: {
               type: 'object',
@@ -298,7 +298,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'gf_get_entry',
-        description: 'Get a specific entry by ID',
+        description: 'Get an entry by ID',
         inputSchema: {
           type: 'object',
           properties: {
@@ -309,18 +309,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'gf_create_entry',
-        description: 'Create a new entry',
+        description: 'Create an entry',
         inputSchema: {
           type: 'object',
           properties: {
             form_id: { type: 'number', description: 'Form ID' },
-            created_by: { type: 'number', description: 'User ID who created the entry' },
+            created_by: { type: 'number', description: 'Creator user ID' },
             status: {
               type: 'string',
               enum: ['active', 'spam', 'trash'],
               description: 'Entry status'
             },
-            date_created: { type: 'string', description: 'Date created in ISO format' }
+            date_created: { type: 'string', description: 'ISO date' }
           },
           additionalProperties: true,
           required: ['form_id']
@@ -328,7 +328,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'gf_update_entry',
-        description: 'Update an existing entry',
+        description: 'Update an entry',
         inputSchema: {
           type: 'object',
           properties: {
@@ -345,12 +345,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'gf_delete_entry',
-        description: 'Delete or trash an entry (requires ALLOW_DELETE=true)',
+        description: 'Delete an entry (requires ALLOW_DELETE=true)',
         inputSchema: {
           type: 'object',
           properties: {
             id: { type: 'number', description: 'Entry ID' },
-            force: { type: 'boolean', description: 'Permanently delete if true, trash if false' }
+            force: { type: 'boolean', description: 'Permanent delete (vs trash)' }
           },
           required: ['id']
         }
@@ -359,12 +359,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // Form Submissions (2 tools)
       {
         name: 'gf_submit_form_data',
-        description: 'Submit form data with full processing pipeline',
+        description: 'Submit form data (triggers notifications, confirmations, payment)',
         inputSchema: {
           type: 'object',
           properties: {
             form_id: { type: 'number', description: 'Form ID' },
-            field_values: { type: 'object', description: 'Additional field values' }
+            field_values: { type: 'object', description: 'Field values' }
           },
           additionalProperties: true,
           required: ['form_id']
@@ -372,7 +372,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'gf_validate_submission',
-        description: 'Validate form submission without processing',
+        description: 'Validate submission without processing',
         inputSchema: {
           type: 'object',
           properties: {
@@ -386,7 +386,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // Notifications (1 tool)
       {
         name: 'gf_send_notifications',
-        description: 'Send notifications for an entry',
+        description: 'Send notifications for entry',
         inputSchema: {
           type: 'object',
           properties: {
@@ -394,7 +394,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             notification_ids: {
               type: 'array',
               items: { type: 'string' },
-              description: 'Array of notification IDs to send'
+              description: 'Notification IDs to send'
             }
           },
           required: ['entry_id']
@@ -404,18 +404,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // Add-on Feeds (7 tools)
       {
         name: 'gf_list_feeds',
-        description: 'List all add-on feeds',
+        description: 'List feeds',
         inputSchema: {
           type: 'object',
           properties: {
-            addon: { type: 'string', description: 'Filter by addon slug' },
-            form_id: { type: 'number', description: 'Filter by form ID' }
+            addon: { type: 'string', description: 'Addon slug' },
+            form_id: { type: 'number', description: 'Form ID' }
           }
         }
       },
       {
         name: 'gf_get_feed',
-        description: 'Get a specific feed by ID',
+        description: 'Get a feed by ID',
         inputSchema: {
           type: 'object',
           properties: {
@@ -426,7 +426,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'gf_list_form_feeds',
-        description: 'Get all feeds for a specific form',
+        description: 'List feeds for a form',
         inputSchema: {
           type: 'object',
           properties: {
@@ -437,47 +437,47 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'gf_create_feed',
-        description: 'Create a new add-on feed',
+        description: 'Create a feed',
         inputSchema: {
           type: 'object',
           properties: {
             addon_slug: { type: 'string', description: 'Add-on slug' },
             form_id: { type: 'number', description: 'Form ID' },
-            is_active: { type: 'boolean', description: 'Whether feed is active' },
-            meta: { type: 'object', description: 'Feed configuration metadata' }
+            is_active: { type: 'boolean', description: 'Feed active state' },
+            meta: { type: 'object', description: 'Feed config' }
           },
           required: ['addon_slug', 'form_id', 'meta']
         }
       },
       {
         name: 'gf_update_feed',
-        description: 'Update an existing feed',
+        description: 'Update a feed (full replace)',
         inputSchema: {
           type: 'object',
           properties: {
             id: { type: 'number', description: 'Feed ID' },
-            is_active: { type: 'boolean', description: 'Whether feed is active' },
-            meta: { type: 'object', description: 'Feed configuration metadata' }
+            is_active: { type: 'boolean', description: 'Feed active state' },
+            meta: { type: 'object', description: 'Feed config' }
           },
           required: ['id']
         }
       },
       {
         name: 'gf_patch_feed',
-        description: 'Partially update a feed',
+        description: 'Patch a feed (partial update)',
         inputSchema: {
           type: 'object',
           properties: {
             id: { type: 'number', description: 'Feed ID' },
-            is_active: { type: 'boolean', description: 'Whether feed is active' },
-            meta: { type: 'object', description: 'Feed configuration metadata' }
+            is_active: { type: 'boolean', description: 'Feed active state' },
+            meta: { type: 'object', description: 'Feed config' }
           },
           required: ['id']
         }
       },
       {
         name: 'gf_delete_feed',
-        description: 'Delete an add-on feed',
+        description: 'Delete a feed',
         inputSchema: {
           type: 'object',
           properties: {
@@ -490,7 +490,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // Field Filters (1 tool)
       {
         name: 'gf_get_field_filters',
-        description: 'Get field filters for a form',
+        description: 'Get field filters for form',
         inputSchema: {
           type: 'object',
           properties: {
@@ -503,7 +503,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // Results (1 tool)
       {
         name: 'gf_get_results',
-        description: 'Get Quiz, Poll, or Survey results',
+        description: 'Get quiz/poll/survey results',
         inputSchema: {
           type: 'object',
           properties: {

@@ -47,7 +47,6 @@ suite.test('List Feeds: Should list all feeds', async () => {
 
   TestAssert.lengthOf(result.feeds, 2);
   TestAssert.equal(result.feeds[0].addon_slug, 'gravityformsmailchimp');
-  TestAssert.equal(result.total_count, 2);
 });
 
 suite.test('List Feeds: Should filter by addon', async () => {
@@ -61,7 +60,6 @@ suite.test('List Feeds: Should filter by addon', async () => {
   const result = await client.listFeeds({ addon: 'gravityformsmailchimp' });
 
   TestAssert.lengthOf(result.feeds, 2);
-  TestAssert.equal(result.filter, 'gravityformsmailchimp');
   result.feeds.forEach(feed => {
     TestAssert.equal(feed.addon_slug, 'gravityformsmailchimp');
   });
@@ -103,9 +101,9 @@ suite.test('Get Feed: Should get specific feed by ID', async () => {
   const result = await client.getFeed({ id: 123 });
 
   TestAssert.equal(result.feed.id, 123);
-  TestAssert.equal(result.addon_slug, 'gravityformsmailchimp');
-  TestAssert.equal(result.form_id, 1);
-  TestAssert.isTrue(result.is_active);
+  TestAssert.equal(result.feed.addon_slug, 'gravityformsmailchimp');
+  TestAssert.equal(result.feed.form_id, 1);
+  TestAssert.isTrue(result.feed.is_active);
 });
 
 suite.test('Get Feed: Should handle complex feed configuration', async () => {
@@ -168,8 +166,6 @@ suite.test('List Form Feeds: Should get all feeds for specific form', async () =
   const result = await client.listFormFeeds({ form_id: 10 });
 
   TestAssert.lengthOf(result.feeds, 3);
-  TestAssert.equal(result.form_id, 10);
-  TestAssert.equal(result.total_count, 3);
 });
 
 suite.test('List Form Feeds: Should handle form with no feeds', async () => {
@@ -178,7 +174,6 @@ suite.test('List Form Feeds: Should handle form with no feeds', async () => {
   const result = await client.listFormFeeds({ form_id: 1 });
 
   TestAssert.lengthOf(result.feeds, 0);
-  TestAssert.equal(result.total_count, 0);
 });
 
 suite.test('List Form Feeds: Should require form_id', async () => {
@@ -211,10 +206,8 @@ suite.test('Create Feed: Should create new MailChimp feed', async () => {
     }
   });
 
-  TestAssert.isTrue(result.created);
   TestAssert.equal(result.feed.id, 500);
-  TestAssert.equal(result.addon_slug, 'gravityformsmailchimp');
-  TestAssert.equal(result.message, 'Feed created successfully');
+  TestAssert.equal(result.feed.addon_slug, 'gravityformsmailchimp');
 });
 
 suite.test('Create Feed: Should create Stripe feed with complex settings', async () => {
@@ -241,7 +234,6 @@ suite.test('Create Feed: Should create Stripe feed with complex settings', async
 
   const result = await client.createFeed(stripeFeed);
 
-  TestAssert.isTrue(result.created);
   TestAssert.equal(result.feed.meta.transactionType, 'subscription');
   TestAssert.equal(result.feed.meta.setupFee_amount, '25.00');
 });
@@ -294,9 +286,7 @@ suite.test('Update Feed: Should update existing feed completely', async () => {
     }
   });
 
-  TestAssert.isTrue(result.updated);
   TestAssert.equal(result.feed.meta.feedName, 'Updated Feed Name');
-  TestAssert.equal(result.message, 'Feed updated successfully');
 });
 
 suite.test('Update Feed: Should handle conditional logic updates', async () => {
@@ -343,10 +333,7 @@ suite.test('Patch Feed: Should partially update feed', async () => {
     is_active: false
   });
 
-  TestAssert.isTrue(result.patched);
   TestAssert.isFalse(result.feed.is_active);
-  TestAssert.includes(result.updated_fields, 'is_active');
-  TestAssert.equal(result.message, 'Feed partially updated successfully');
 });
 
 suite.test('Patch Feed: Should update only specified meta fields', async () => {
@@ -386,7 +373,6 @@ suite.test('Delete Feed: Should delete feed', async () => {
 
   TestAssert.isTrue(result.deleted);
   TestAssert.equal(result.feed_id, 100);
-  TestAssert.equal(result.message, 'Feed deleted successfully');
 });
 
 suite.test('Delete Feed: Should require ALLOW_DELETE=true', async () => {

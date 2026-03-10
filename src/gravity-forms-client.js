@@ -197,9 +197,7 @@ export class GravityFormsClient {
       return {
         forms: response.data,
         total_count: parseInt(response.headers['x-wp-total'] || '0'),
-        total_pages: parseInt(response.headers['x-wp-totalpages'] || '1'),
-        current_page: validated.page || 1,
-        per_page: validated.per_page || 20
+        total_pages: parseInt(response.headers['x-wp-totalpages'] || '1')
       };
     });
   }
@@ -213,10 +211,7 @@ export class GravityFormsClient {
       const response = await this.httpClient.get(`/forms/${id}`);
 
       return {
-        form: response.data,
-        field_count: response.data.fields?.length || 0,
-        is_active: response.data.is_active || false,
-        version: response.data.version || '1.0'
+        form: response.data
       };
     });
   }
@@ -247,10 +242,7 @@ export class GravityFormsClient {
       const response = await this.httpClient.post('/forms', validated);
 
       return {
-        form: response.data,
-        created: true,
-        form_id: response.data.id,
-        message: 'Form created successfully'
+        form: response.data
       };
     });
   }
@@ -277,10 +269,7 @@ export class GravityFormsClient {
       const response = await this.httpClient.put(`/forms/${id}`, updatedFormData);
 
       return {
-        form: response.data,
-        updated: true,
-        form_id: id,
-        message: 'Form updated successfully'
+        form: response.data
       };
     });
   }
@@ -306,8 +295,7 @@ export class GravityFormsClient {
       return {
         deleted: true,
         form_id: id,
-        permanently: force,
-        message: force ? 'Form permanently deleted' : 'Form moved to trash'
+        permanently: force
       };
     });
   }
@@ -326,9 +314,7 @@ export class GravityFormsClient {
 
       return {
         valid: response.data.is_valid || false,
-        validation_messages: response.data.validation_messages || {},
-        form_id: form_id,
-        message: response.data.is_valid ? 'Form data is valid' : 'Validation errors found'
+        validation_messages: response.data.validation_messages || {}
       };
     });
   }
@@ -361,9 +347,7 @@ export class GravityFormsClient {
 
       return {
         entries: response.data.entries || response.data,
-        total_count: response.data.total_count || parseInt(response.headers['x-wp-total'] || '0'),
-        search_criteria: validated.search || null,
-        sorting: validated.sorting || null
+        total_count: response.data.total_count || parseInt(response.headers['x-wp-total'] || '0')
       };
     });
   }
@@ -377,10 +361,7 @@ export class GravityFormsClient {
       const response = await this.httpClient.get(`/entries/${id}`);
 
       return {
-        entry: response.data,
-        form_id: response.data.form_id,
-        status: response.data.status,
-        date_created: response.data.date_created
+        entry: response.data
       };
     });
   }
@@ -393,11 +374,7 @@ export class GravityFormsClient {
       const response = await this.httpClient.post('/entries', validated);
 
       return {
-        entry: response.data,
-        created: true,
-        entry_id: response.data.id,
-        form_id: response.data.form_id,
-        message: 'Entry created successfully'
+        entry: response.data
       };
     });
   }
@@ -424,10 +401,7 @@ export class GravityFormsClient {
       const response = await this.httpClient.put(`/entries/${id}`, updatedEntryData);
 
       return {
-        entry: response.data,
-        updated: true,
-        entry_id: id,
-        message: 'Entry updated successfully'
+        entry: response.data
       };
     });
   }
@@ -453,8 +427,7 @@ export class GravityFormsClient {
       return {
         deleted: true,
         entry_id: id,
-        permanently: force,
-        message: force ? 'Entry permanently deleted' : 'Entry moved to trash'
+        permanently: force
       };
     });
   }
@@ -477,12 +450,8 @@ export class GravityFormsClient {
         entry_id: response.data.entry_id,
         confirmation_message: response.data.confirmation_message || '',
         validation_messages: response.data.validation_messages || {},
-        form_id: form_id,
-        message: response.data.is_valid ? 'Form submitted successfully' : 'Submission failed validation',
-        // Include additional fields if present
         resume_token: response.data.resume_token,
-        resume_url: response.data.resume_url,
-        saved: response.data.saved
+        resume_url: response.data.resume_url
       };
     });
   }
@@ -502,9 +471,7 @@ export class GravityFormsClient {
       return {
         valid: response.data.is_valid || false,
         validation_messages: response.data.validation_messages || {},
-        form_id: form_id,
-        field_errors: response.data.field_errors || [],
-        message: response.data.is_valid ? 'Submission data is valid' : 'Validation errors found'
+        field_errors: response.data.field_errors || []
       };
     });
   }
@@ -529,9 +496,7 @@ export class GravityFormsClient {
 
       return {
         sent: true,
-        entry_id: entry_id,
-        notifications_sent: response.data.notifications_sent || [],
-        message: 'Notifications sent successfully'
+        notifications_sent: response.data.notifications_sent || []
       };
     });
   }
@@ -548,9 +513,7 @@ export class GravityFormsClient {
       const response = await this.httpClient.get('/feeds', { params: validated });
 
       return {
-        feeds: response.data,
-        total_count: response.data.length,
-        filter: validated.addon || null
+        feeds: response.data
       };
     });
   }
@@ -564,10 +527,7 @@ export class GravityFormsClient {
       const response = await this.httpClient.get(`/feeds/${id}`);
 
       return {
-        feed: response.data,
-        addon_slug: response.data.addon_slug,
-        form_id: response.data.form_id,
-        is_active: response.data.is_active
+        feed: response.data
       };
     });
   }
@@ -581,9 +541,7 @@ export class GravityFormsClient {
       const response = await this.httpClient.get(`/forms/${form_id}/feeds`);
 
       return {
-        feeds: response.data,
-        form_id: form_id,
-        total_count: response.data.length
+        feeds: response.data
       };
     });
   }
@@ -596,11 +554,7 @@ export class GravityFormsClient {
       const response = await this.httpClient.post('/feeds', validated);
 
       return {
-        feed: response.data,
-        created: true,
-        feed_id: response.data.id,
-        addon_slug: response.data.addon_slug,
-        message: 'Feed created successfully'
+        feed: response.data
       };
     });
   }
@@ -627,10 +581,7 @@ export class GravityFormsClient {
       const response = await this.httpClient.put(`/feeds/${id}`, updatedFeedData);
 
       return {
-        feed: response.data,
-        updated: true,
-        feed_id: id,
-        message: 'Feed updated successfully'
+        feed: response.data
       };
     });
   }
@@ -644,11 +595,7 @@ export class GravityFormsClient {
       const response = await this.httpClient.patch(`/feeds/${id}`, patchData);
 
       return {
-        feed: response.data,
-        patched: true,
-        feed_id: id,
-        updated_fields: Object.keys(patchData),
-        message: 'Feed partially updated successfully'
+        feed: response.data
       };
     });
   }
@@ -667,8 +614,7 @@ export class GravityFormsClient {
 
       return {
         deleted: true,
-        feed_id: id,
-        message: 'Feed deleted successfully'
+        feed_id: id
       };
     });
   }
@@ -686,9 +632,7 @@ export class GravityFormsClient {
       const response = await this.httpClient.get(`/forms/${form_id}/field-filters`);
 
       return {
-        field_filters: response.data,
-        form_id: form_id,
-        filter_count: response.data.length
+        field_filters: response.data
       };
     });
   }
@@ -702,11 +646,7 @@ export class GravityFormsClient {
       const response = await this.httpClient.get(`/forms/${form_id}/results`, { params: searchParams });
 
       return {
-        results: response.data,
-        form_id: form_id,
-        form_type: response.data.form_type || 'unknown',
-        total_entries: response.data.total_entries || 0,
-        summary: response.data.summary || {}
+        results: response.data
       };
     });
   }

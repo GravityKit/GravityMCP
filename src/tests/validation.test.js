@@ -529,7 +529,7 @@ suite.test('Special Characters: HTML encoding', async () => {
     '2': 'Normal & special < > characters'
   });
 
-  TestAssert.isTrue(result.created);
+  TestAssert.equal(result.entry.id, 1);
 });
 
 // =================================
