@@ -21,6 +21,7 @@ import fieldRegistry from './field-definitions/field-registry.js';
 import FieldAwareValidator from './config/field-validation.js';
 import logger from './utils/logger.js';
 import { sanitize } from './utils/sanitize.js';
+import { stripEmpty } from './utils/compact.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -79,6 +80,10 @@ async function initializeClient() {
 }
 
 /**
+ * Recursively strip null, empty string, and false values from objects/arrays.
+ * Reduces token usage by removing noise like empty field values and absent meta keys.
+ */
+/**
  * Create standard error response
  */
 function createErrorResponse(message, details = null) {
@@ -94,29 +99,29 @@ function createErrorResponse(message, details = null) {
 }
 
 /**
- * Wrap async handler with error handling
+ * Wrap async handler with error handling and response compaction.
+ * @param {Function} handler - async function returning result object
+ * @param {object} params - tool params; if compact !== false, strips null/empty/false values
  */
-function wrapHandler(handler) {
-  return async (params) => {
+function wrapHandler(handler, params = {}) {
+  return async () => {
     if (!gravityFormsClient) {
       return createErrorResponse('Gravity Forms client not initialized');
     }
 
     try {
-      const result = await handler(params);
+      const result = await handler();
+      const output = params.compact !== false ? stripEmpty(result) : result;
 
-      // MCP expects content to be an array of content blocks
-      // Each block should have a type (usually "text") and the actual content
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify(result)
+            text: JSON.stringify(output)
           }
         ]
       };
     } catch (error) {
-      // Sanitize error details to prevent logging sensitive data
       const safeDetails = error.details ? sanitize(error.details) : undefined;
       console.error(`Tool error: ${error.message}`);
       return createErrorResponse(error.message, safeDetails);
@@ -134,7 +139,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // Forms Management (6 tools)
       {
         name: 'gf_list_forms',
-        description: 'List all forms',
+        description: 'List all forms. Omits null/empty values by default; pass compact=false for raw data.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -142,17 +147,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: 'array',
               items: { type: 'number' },
               description: 'Form IDs to include'
-            }
+            },
+            compact: { type: 'boolean', description: 'Strip null/empty values (default true)', default: true }
           }
         }
       },
       {
         name: 'gf_get_form',
-        description: 'Get a form by ID',
+        description: 'Get a form by ID. Omits null/empty values by default; pass compact=false for raw data.',
         inputSchema: {
           type: 'object',
           properties: {
-            id: { type: 'number', description: 'Form ID' }
+            id: { type: 'number', description: 'Form ID' },
+            compact: { type: 'boolean', description: 'Strip null/empty values (default true)', default: true }
           },
           required: ['id']
         }
@@ -228,7 +235,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // Entries Management (6 tools)
       {
         name: 'gf_list_entries',
-        description: 'List/search entries with filtering',
+        description: 'List/search entries. Omits null/empty values by default; pass compact=false for raw data.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -292,17 +299,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 page_size: { type: 'number' },
                 current_page: { type: 'number' }
               }
-            }
+            },
+            compact: { type: 'boolean', description: 'Strip null/empty values (default true)', default: true }
           }
         }
       },
       {
         name: 'gf_get_entry',
-        description: 'Get an entry by ID',
+        description: 'Get an entry by ID. Omits null/empty values by default; pass compact=false for raw data.',
         inputSchema: {
           type: 'object',
           properties: {
-            id: { type: 'number', description: 'Entry ID' }
+            id: { type: 'number', description: 'Entry ID' },
+            compact: { type: 'boolean', description: 'Strip null/empty values (default true)', default: true }
           },
           required: ['id']
         }
@@ -404,33 +413,36 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // Add-on Feeds (7 tools)
       {
         name: 'gf_list_feeds',
-        description: 'List feeds',
+        description: 'List feeds. Omits null/empty values by default; pass compact=false for raw data.',
         inputSchema: {
           type: 'object',
           properties: {
             addon: { type: 'string', description: 'Addon slug' },
-            form_id: { type: 'number', description: 'Form ID' }
+            form_id: { type: 'number', description: 'Form ID' },
+            compact: { type: 'boolean', description: 'Strip null/empty values (default true)', default: true }
           }
         }
       },
       {
         name: 'gf_get_feed',
-        description: 'Get a feed by ID',
+        description: 'Get a feed by ID. Omits null/empty values by default; pass compact=false for raw data.',
         inputSchema: {
           type: 'object',
           properties: {
-            id: { type: 'number', description: 'Feed ID' }
+            id: { type: 'number', description: 'Feed ID' },
+            compact: { type: 'boolean', description: 'Strip null/empty values (default true)', default: true }
           },
           required: ['id']
         }
       },
       {
         name: 'gf_list_form_feeds',
-        description: 'List feeds for a form',
+        description: 'List feeds for a form. Omits null/empty values by default; pass compact=false for raw data.',
         inputSchema: {
           type: 'object',
           properties: {
-            form_id: { type: 'number', description: 'Form ID' }
+            form_id: { type: 'number', description: 'Form ID' },
+            compact: { type: 'boolean', description: 'Strip null/empty values (default true)', default: true }
           },
           required: ['form_id']
         }
@@ -537,61 +549,61 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   switch (name) {
     // Forms Management
     case 'gf_list_forms':
-      return wrapHandler(() => gravityFormsClient.listForms(params))();
+      return wrapHandler(() => gravityFormsClient.listForms(params), params)();
     case 'gf_get_form':
-      return wrapHandler(() => gravityFormsClient.getForm(params))();
+      return wrapHandler(() => gravityFormsClient.getForm(params), params)();
     case 'gf_create_form':
-      return wrapHandler(() => gravityFormsClient.createForm(params))();
+      return wrapHandler(() => gravityFormsClient.createForm(params), params)();
     case 'gf_update_form':
-      return wrapHandler(() => gravityFormsClient.updateForm(params))();
+      return wrapHandler(() => gravityFormsClient.updateForm(params), params)();
     case 'gf_delete_form':
-      return wrapHandler(() => gravityFormsClient.deleteForm(params))();
+      return wrapHandler(() => gravityFormsClient.deleteForm(params), params)();
     case 'gf_validate_form':
-      return wrapHandler(() => gravityFormsClient.validateForm(params))();
+      return wrapHandler(() => gravityFormsClient.validateForm(params), params)();
 
     // Entries Management
     case 'gf_list_entries':
-      return wrapHandler(() => gravityFormsClient.listEntries(params))();
+      return wrapHandler(() => gravityFormsClient.listEntries(params), params)();
     case 'gf_get_entry':
-      return wrapHandler(() => gravityFormsClient.getEntry(params))();
+      return wrapHandler(() => gravityFormsClient.getEntry(params), params)();
     case 'gf_create_entry':
-      return wrapHandler(() => gravityFormsClient.createEntry(params))();
+      return wrapHandler(() => gravityFormsClient.createEntry(params), params)();
     case 'gf_update_entry':
-      return wrapHandler(() => gravityFormsClient.updateEntry(params))();
+      return wrapHandler(() => gravityFormsClient.updateEntry(params), params)();
     case 'gf_delete_entry':
-      return wrapHandler(() => gravityFormsClient.deleteEntry(params))();
+      return wrapHandler(() => gravityFormsClient.deleteEntry(params), params)();
 
     // Form Submissions
     case 'gf_submit_form_data':
-      return wrapHandler(() => gravityFormsClient.submitFormData(params))();
+      return wrapHandler(() => gravityFormsClient.submitFormData(params), params)();
     case 'gf_validate_submission':
-      return wrapHandler(() => gravityFormsClient.validateSubmission(params))();
+      return wrapHandler(() => gravityFormsClient.validateSubmission(params), params)();
 
     // Notifications
     case 'gf_send_notifications':
-      return wrapHandler(() => gravityFormsClient.sendNotifications(params))();
+      return wrapHandler(() => gravityFormsClient.sendNotifications(params), params)();
 
     // Add-on Feeds
     case 'gf_list_feeds':
-      return wrapHandler(() => gravityFormsClient.listFeeds(params))();
+      return wrapHandler(() => gravityFormsClient.listFeeds(params), params)();
     case 'gf_get_feed':
-      return wrapHandler(() => gravityFormsClient.getFeed(params))();
+      return wrapHandler(() => gravityFormsClient.getFeed(params), params)();
     case 'gf_list_form_feeds':
-      return wrapHandler(() => gravityFormsClient.listFormFeeds(params))();
+      return wrapHandler(() => gravityFormsClient.listFormFeeds(params), params)();
     case 'gf_create_feed':
-      return wrapHandler(() => gravityFormsClient.createFeed(params))();
+      return wrapHandler(() => gravityFormsClient.createFeed(params), params)();
     case 'gf_update_feed':
-      return wrapHandler(() => gravityFormsClient.updateFeed(params))();
+      return wrapHandler(() => gravityFormsClient.updateFeed(params), params)();
     case 'gf_patch_feed':
-      return wrapHandler(() => gravityFormsClient.patchFeed(params))();
+      return wrapHandler(() => gravityFormsClient.patchFeed(params), params)();
     case 'gf_delete_feed':
-      return wrapHandler(() => gravityFormsClient.deleteFeed(params))();
+      return wrapHandler(() => gravityFormsClient.deleteFeed(params), params)();
 
     // Utilities
     case 'gf_get_field_filters':
-      return wrapHandler(() => gravityFormsClient.getFieldFilters(params))();
+      return wrapHandler(() => gravityFormsClient.getFieldFilters(params), params)();
     case 'gf_get_results':
-      return wrapHandler(() => gravityFormsClient.getResults(params))();
+      return wrapHandler(() => gravityFormsClient.getResults(params), params)();
 
     // Field Operations - Intelligent field management
     case 'gf_add_field':
@@ -600,28 +612,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error('Field operations not initialized');
         }
         return await fieldOperationHandlers.gf_add_field(params, fieldOperations);
-      })();
+      }, params)();
     case 'gf_update_field':
       return wrapHandler(async () => {
         if (!fieldOperations) {
           throw new Error('Field operations not initialized');
         }
         return await fieldOperationHandlers.gf_update_field(params, fieldOperations);
-      })();
+      }, params)();
     case 'gf_delete_field':
       return wrapHandler(async () => {
         if (!fieldOperations) {
           throw new Error('Field operations not initialized');
         }
         return await fieldOperationHandlers.gf_delete_field(params, fieldOperations);
-      })();
+      }, params)();
     case 'gf_list_field_types':
       return wrapHandler(async () => {
         if (!fieldOperations) {
           throw new Error('Field operations not initialized');
         }
         return await fieldOperationHandlers.gf_list_field_types(params, fieldOperations);
-      })();
+      }, params)();
 
     default:
       return createErrorResponse(`Unknown tool: ${name}`);

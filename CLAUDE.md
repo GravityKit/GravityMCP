@@ -4,7 +4,7 @@ You MUST fully ingest @AGENTS.md first.
 
 ## Project Identity
 
-- **Package:** `@gravitykit/gravitymcp` v1.1.0
+- **Package:** `@gravitykit/gravitymcp` v1.2.0
 - **Type:** Node.js MCP server (ESM)
 - **Purpose:** Full Gravity Forms REST API v2 coverage via 28 MCP tools
 - **Repo:** https://github.com/GravityKit/GravityMCP
@@ -35,3 +35,4 @@ Required env vars (see `.env.example` for full list):
 5. **Update operations fetch-then-merge** — always GET existing data first to avoid data loss
 6. **Minimize response tokens** — no pretty-print (`JSON.stringify(result)` not `null, 2`), no redundant `message` strings, no echo-back of input IDs, no `created`/`updated` booleans. Return only essential data.
 7. **Keep tool descriptions terse** — every token in tool schemas is sent on every `tools/list` call
+8. **Compact mode strips null and empty strings** — `stripEmpty()` in `utils/compact.js` runs on all responses by default. `false` is preserved (semantic meaning). Agents pass `compact=false` for raw data.

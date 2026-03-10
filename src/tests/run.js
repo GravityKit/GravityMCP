@@ -11,6 +11,7 @@ import entriesTests from './entries.test.js';
 import feedsTests from './feeds.test.js';
 import submissionsTests from './submissions.test.js';
 import serverToolsTests from './server-tools.test.js';
+import compactTests from './compact.test.js';
 
 // Test suites to run
 const testSuites = [
@@ -19,7 +20,8 @@ const testSuites = [
   entriesTests,
   feedsTests,
   submissionsTests,
-  serverToolsTests
+  serverToolsTests,
+  compactTests
 ];
 
 // Test statistics
