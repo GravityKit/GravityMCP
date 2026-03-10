@@ -7,7 +7,7 @@
  * Preserves: false, 0, "0"
  */
 
-import { stripEmpty } from '../utils/compact.js';
+import { stripEmpty, stripEntryMeta, stripEntryMetaFromResponse } from '../utils/compact.js';
 import { TestRunner, TestAssert } from './helpers.js';
 
 const runner = new TestRunner('Compact Utility Tests');
@@ -218,6 +218,123 @@ runner.test('stripEmpty: does not mutate original object', () => {
   TestAssert.equal(input.b, null, 'original null preserved');
   TestAssert.equal(input.c, '', 'original empty string preserved');
   TestAssert.equal(Object.keys(input).length, 3, 'original key count unchanged');
+});
+
+// --- stripEntryMeta ---
+
+runner.test('stripEntryMeta: keeps core properties and field values', () => {
+  const entry = {
+    id: '123',
+    form_id: '29',
+    status: 'active',
+    date_created: '2024-01-15',
+    date_updated: '2024-01-15',
+    is_starred: '0',
+    is_read: '0',
+    ip: '127.0.0.1',
+    source_url: 'https://example.com',
+    user_agent: 'node',
+    currency: 'USD',
+    created_by: '1',
+    '2': 'test@example.com',
+    '3': 'some survey value',
+    '6': '21621',
+    gv_revision_parent_id: false,
+    gv_revision_date: false,
+    gv_revision_date_gmt: false,
+    gv_revision_user_id: false,
+    gv_revision_changed: false,
+    helpscout_conversation_id: false,
+    conversion_bridge_session: false
+  };
+  const result = stripEntryMeta(entry);
+
+  // Core properties kept
+  TestAssert.equal(result.id, '123', 'id kept');
+  TestAssert.equal(result.form_id, '29', 'form_id kept');
+  TestAssert.equal(result.status, 'active', 'status kept');
+  TestAssert.equal(result.created_by, '1', 'created_by kept');
+  TestAssert.equal(result.currency, 'USD', 'currency kept');
+
+  // Field values kept
+  TestAssert.equal(result['2'], 'test@example.com', 'field 2 kept');
+  TestAssert.equal(result['3'], 'some survey value', 'field 3 kept');
+  TestAssert.equal(result['6'], '21621', 'field 6 kept');
+
+  // Plugin meta stripped
+  TestAssert.equal(result.gv_revision_parent_id, undefined, 'gv_revision_parent_id stripped');
+  TestAssert.equal(result.gv_revision_date, undefined, 'gv_revision_date stripped');
+  TestAssert.equal(result.helpscout_conversation_id, undefined, 'helpscout_conversation_id stripped');
+  TestAssert.equal(result.conversion_bridge_session, undefined, 'conversion_bridge_session stripped');
+});
+
+runner.test('stripEntryMeta: keeps compound field keys (dot notation)', () => {
+  const entry = {
+    id: '456',
+    form_id: '5',
+    status: 'active',
+    '5.1': '123 Main St',
+    '5.2': 'Apt 4',
+    '5.3': 'Springfield',
+    '5.4': 'IL',
+    '5.5': '62701',
+    some_plugin_meta: 'value'
+  };
+  const result = stripEntryMeta(entry);
+  TestAssert.equal(result['5.1'], '123 Main St', 'compound field 5.1 kept');
+  TestAssert.equal(result['5.3'], 'Springfield', 'compound field 5.3 kept');
+  TestAssert.equal(result.some_plugin_meta, undefined, 'plugin meta stripped');
+});
+
+runner.test('stripEntryMeta: keeps payment fields when present', () => {
+  const entry = {
+    id: '789',
+    form_id: '10',
+    status: 'active',
+    payment_status: 'Paid',
+    payment_amount: '49.99',
+    payment_method: 'stripe',
+    transaction_id: 'txn_123',
+    custom_addon_field: 'noise'
+  };
+  const result = stripEntryMeta(entry);
+  TestAssert.equal(result.payment_status, 'Paid', 'payment_status kept');
+  TestAssert.equal(result.payment_amount, '49.99', 'payment_amount kept');
+  TestAssert.equal(result.transaction_id, 'txn_123', 'transaction_id kept');
+  TestAssert.equal(result.custom_addon_field, undefined, 'custom addon stripped');
+});
+
+// --- stripEntryMetaFromResponse ---
+
+runner.test('stripEntryMetaFromResponse: handles entries array', () => {
+  const response = {
+    entries: [
+      { id: '1', form_id: '5', status: 'active', '2': 'val', plugin_meta: 'x' },
+      { id: '2', form_id: '5', status: 'active', '3': 'val', plugin_meta: 'y' }
+    ],
+    total_count: 2
+  };
+  const result = stripEntryMetaFromResponse(response);
+  TestAssert.equal(result.entries.length, 2, 'array length preserved');
+  TestAssert.equal(result.total_count, 2, 'total_count preserved');
+  TestAssert.equal(result.entries[0].plugin_meta, undefined, 'meta stripped from first');
+  TestAssert.equal(result.entries[1].plugin_meta, undefined, 'meta stripped from second');
+  TestAssert.equal(result.entries[0]['2'], 'val', 'field value kept in first');
+});
+
+runner.test('stripEntryMetaFromResponse: handles single entry', () => {
+  const response = {
+    entry: { id: '1', form_id: '5', status: 'active', '2': 'val', plugin_meta: 'x' }
+  };
+  const result = stripEntryMetaFromResponse(response);
+  TestAssert.equal(result.entry.plugin_meta, undefined, 'meta stripped');
+  TestAssert.equal(result.entry['2'], 'val', 'field value kept');
+});
+
+runner.test('stripEntryMetaFromResponse: passes through non-entry responses', () => {
+  const response = { forms: [{ id: 1 }] };
+  const result = stripEntryMetaFromResponse(response);
+  TestAssert.equal(result.forms[0].id, 1, 'non-entry response unchanged');
 });
 
 // Run tests

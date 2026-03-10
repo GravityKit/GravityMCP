@@ -21,7 +21,7 @@ import fieldRegistry from './field-definitions/field-registry.js';
 import FieldAwareValidator from './config/field-validation.js';
 import logger from './utils/logger.js';
 import { sanitize } from './utils/sanitize.js';
-import { stripEmpty } from './utils/compact.js';
+import { stripEmpty, stripEntryMetaFromResponse } from './utils/compact.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -235,7 +235,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // Entries Management (6 tools)
       {
         name: 'gf_list_entries',
-        description: 'List/search entries. Omits null/empty values by default; pass compact=false for raw data.',
+        description: 'List/search entries. Strips null/empty values and plugin entry meta by default; pass compact=false for full raw data.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -306,7 +306,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'gf_get_entry',
-        description: 'Get an entry by ID. Omits null/empty values by default; pass compact=false for raw data.',
+        description: 'Get an entry by ID. Strips null/empty values and plugin entry meta by default; pass compact=false for full raw data.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -563,13 +563,25 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     // Entries Management
     case 'gf_list_entries':
-      return wrapHandler(() => gravityFormsClient.listEntries(params), params)();
+      return wrapHandler(async () => {
+        const result = await gravityFormsClient.listEntries(params);
+        return params.compact !== false ? stripEntryMetaFromResponse(result) : result;
+      }, params)();
     case 'gf_get_entry':
-      return wrapHandler(() => gravityFormsClient.getEntry(params), params)();
+      return wrapHandler(async () => {
+        const result = await gravityFormsClient.getEntry(params);
+        return params.compact !== false ? stripEntryMetaFromResponse(result) : result;
+      }, params)();
     case 'gf_create_entry':
-      return wrapHandler(() => gravityFormsClient.createEntry(params), params)();
+      return wrapHandler(async () => {
+        const result = await gravityFormsClient.createEntry(params);
+        return params.compact !== false ? stripEntryMetaFromResponse(result) : result;
+      }, params)();
     case 'gf_update_entry':
-      return wrapHandler(() => gravityFormsClient.updateEntry(params), params)();
+      return wrapHandler(async () => {
+        const result = await gravityFormsClient.updateEntry(params);
+        return params.compact !== false ? stripEntryMetaFromResponse(result) : result;
+      }, params)();
     case 'gf_delete_entry':
       return wrapHandler(() => gravityFormsClient.deleteEntry(params), params)();
 

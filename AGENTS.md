@@ -123,7 +123,7 @@ Responses are optimized for minimal token usage:
 - **Compact JSON**: `JSON.stringify(result)` — no pretty-printing (no `null, 2`) — `src/index.js:114`
 - **Minimal payloads**: No redundant `message`, `created`/`updated` booleans, or echo-back of input IDs. GET methods return `{ resource: data }`, mutations return only what can't be inferred (e.g., delete returns `{ deleted: true, id, permanently }`)
 - **Summary/detail modes**: `gf_list_field_types` defaults to summary mode (`type`, `label`, `category` only). Pass `detail=true` for full metadata (supports, storage, validation, icon). Pass `include_variants=true` with `detail=true` for variant data.
-- **Compact mode (default on)**: `stripEmpty()` (`utils/compact.js`) recursively removes `null` and `""` values from all responses via `wrapHandler()`. `false` is preserved (semantic meaning, e.g. `is_active: false`). `"0"`/`"1"` strings are preserved (GF boolean pattern). Data-heavy GET tools expose a `compact` parameter — pass `compact=false` for raw unstripped data.
+- **Compact mode (default on)**: `stripEmpty()` (`utils/compact.js`) recursively removes `null` and `""` values from all responses via `wrapHandler()`. `false` is preserved (semantic meaning). Entry tools also strip plugin-added meta keys (e.g., `gv_revision_*`, `helpscout_conversation_id`) via `stripEntryMeta()`, keeping only core properties and numbered field values. Pass `compact=false` for full raw data.
 - **Concise tool descriptions**: All 28 tool descriptions and property descriptions are terse to reduce tool-list overhead
 
 ### Tool Categories

@@ -27,4 +27,55 @@ export function stripEmpty(obj) {
   return obj;
 }
 
-export default { stripEmpty };
+/**
+ * Core entry properties returned by the GF REST API.
+ * Everything else is plugin-added entry meta (stripped by default).
+ */
+const CORE_ENTRY_KEYS = new Set([
+  'id', 'form_id', 'post_id', 'date_created', 'date_updated',
+  'is_starred', 'is_read', 'ip', 'source_url', 'user_agent',
+  'currency', 'payment_status', 'payment_date', 'payment_amount',
+  'payment_method', 'transaction_id', 'is_fulfilled', 'created_by',
+  'transaction_type', 'status', 'source_id'
+]);
+
+/**
+ * Test if a key is a field value (numeric or dot-notation like "5.1").
+ */
+function isFieldKey(key) {
+  return /^\d+(\.\d+)?$/.test(key);
+}
+
+/**
+ * Strip plugin-added entry meta from an entry object.
+ * Keeps core properties and numbered field values.
+ * @param {object} entry - Single entry object
+ * @returns {object} Entry with only core + field keys
+ */
+export function stripEntryMeta(entry) {
+  const result = {};
+  for (const [key, value] of Object.entries(entry)) {
+    if (CORE_ENTRY_KEYS.has(key) || isFieldKey(key)) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+/**
+ * Strip entry meta from a response containing entries.
+ * Handles both { entries: [...] } and { entry: {...} } shapes.
+ * @param {object} response - Tool response object
+ * @returns {object} Response with entry meta stripped
+ */
+export function stripEntryMetaFromResponse(response) {
+  if (response.entries && Array.isArray(response.entries)) {
+    return { ...response, entries: response.entries.map(stripEntryMeta) };
+  }
+  if (response.entry && typeof response.entry === 'object') {
+    return { ...response, entry: stripEntryMeta(response.entry) };
+  }
+  return response;
+}
+
+export default { stripEmpty, stripEntryMeta, stripEntryMetaFromResponse };
